@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#0A0A0A</color>
+    <string name="app_name">Bonds Tracker</string>
+    <string name="channel_description">Notifications for bond payouts and maturity dates</string>
+    <string name="channel_name">Bond Reminders</string>
+    <style name="Theme.BondsTracker" parent="android:Theme.Material.Light.NoActionBar"/>
+</resources>

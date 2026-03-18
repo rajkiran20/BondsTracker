@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.7.3" type="partial_results">
+    <map id="NotificationPermission">
+        <entry
+            name="source"
+            boolean="true"/>
+    </map>
+    <map id="UnsafeImplicitIntentLaunch">
+            <map id="actionsSent">
+                    <map id="android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS (used to start an activity)">
+                        <location id="0"
+                            file="${:app*debug*MAIN*sourceProvider*0*javaDir*0}/app/le/bondstracker/MainActivity.kt"
+                            line="52"
+                            column="30"
+                            startOffset="2063"
+                            endLine="52"
+                            endColumn="90"
+                            endOffset="2123"/>
+                    </map>
+            </map>
+    </map>
+    <map id="UnsafeIntentLaunch">
+            <map id="unprotected">
+                <entry
+                    name="app.le.bondstracker.MainActivity"
+                    boolean="true"/>
+            </map>
+    </map>
+    <map id="UnusedResources">
+        <location id="R.drawable.ic_card"
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/drawable/ic_card.xml"
+            line="1"
+            column="1"
+            startOffset="0"
+            endLine="12"
+            endColumn="10"
+            endOffset="455"/>
+        <location id="R.drawable.ic_launcher_background"
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/drawable/ic_launcher_background.xml"
+            line="2"
+            column="1"
+            startOffset="39"
+            endLine="170"
+            endColumn="10"
+            endOffset="5605"/>
+        <location id="R.drawable.ic_launcher_foreground"
+            file="${:app*debug*MAIN*sourceProvider*0*resDir*0}/drawable/ic_launcher_foreground.xml"
+            line="1"
+            column="1"
+            startOffset="0"
+            endLine="30"
+            endColumn="10"
+            endOffset="1702"/>
+        <entry
+            name="model"
+            string="drawable[ic_card(D),ic_launcher_background(D),ic_launcher_foreground(D),ic_launcher_foreground_1(E)],font[montserrat_light(R),montserrat_regular(R),montserrat_medium(R),montserrat_semibold(R),montserrat_bold(R),montserrat_extrabold(R),manrope_regular(R),manrope_medium(R),manrope_semibold(R),manrope_bold(R),manrope_extrabold(R)],mipmap[ic_launcher(U),ic_launcher_round(U),ic_launcher_background(U),ic_launcher_foreground(U)],string[app_name(U),channel_name(U),channel_description(U)],style[Theme_BondsTracker(U)];2^3,f^11^12,10^11^12;;;"/>
+    </map>
+
+</incidents>

@@ -1,0 +1,70 @@
+app.le.bondstracker.app-lifecycle-viewmodel-compose-release-0 /Users/rajkiranbande/.gradle/caches/8.9/transforms/01c4c5c3b28aed995b9182b4ca3e2126/transformed/lifecycle-viewmodel-compose-release/res
+app.le.bondstracker.app-lifecycle-livedata-2.8.7-1 /Users/rajkiranbande/.gradle/caches/8.9/transforms/0a3bef814857dbde91853fa076f2fdc4/transformed/lifecycle-livedata-2.8.7/res
+app.le.bondstracker.app-lifecycle-viewmodel-release-2 /Users/rajkiranbande/.gradle/caches/8.9/transforms/0ac20eb77c86cac2e2966749e265fccc/transformed/lifecycle-viewmodel-release/res
+app.le.bondstracker.app-ui-text-release-3 /Users/rajkiranbande/.gradle/caches/8.9/transforms/0bbc64649778182aea002cb3d0181442/transformed/ui-text-release/res
+app.le.bondstracker.app-tracing-1.2.0-4 /Users/rajkiranbande/.gradle/caches/8.9/transforms/0ffe47e9fb1f1f8000ff1b207ffb7f0d/transformed/tracing-1.2.0/res
+app.le.bondstracker.app-material-icons-core-release-5 /Users/rajkiranbande/.gradle/caches/8.9/transforms/103b1d1e29f202276b61d92cfd03196e/transformed/material-icons-core-release/res
+app.le.bondstracker.app-room-ktx-2.6.1-6 /Users/rajkiranbande/.gradle/caches/8.9/transforms/11d8f5ac80533ef5381c86f30017ff23/transformed/room-ktx-2.6.1/res
+app.le.bondstracker.app-lifecycle-viewmodel-savedstate-2.8.7-7 /Users/rajkiranbande/.gradle/caches/8.9/transforms/18d004aff03383bde9ef521e6c35b245/transformed/lifecycle-viewmodel-savedstate-2.8.7/res
+app.le.bondstracker.app-navigation-common-2.8.5-8 /Users/rajkiranbande/.gradle/caches/8.9/transforms/19554d4ea1ea4affabade29401c82581/transformed/navigation-common-2.8.5/res
+app.le.bondstracker.app-lifecycle-runtime-compose-release-9 /Users/rajkiranbande/.gradle/caches/8.9/transforms/1d4d0310eba499b48ddf1aa121961a59/transformed/lifecycle-runtime-compose-release/res
+app.le.bondstracker.app-material-ripple-release-10 /Users/rajkiranbande/.gradle/caches/8.9/transforms/21015982c4aaf2110c90168e535a37bc/transformed/material-ripple-release/res
+app.le.bondstracker.app-work-runtime-ktx-2.10.0-11 /Users/rajkiranbande/.gradle/caches/8.9/transforms/25649fd9d185d3a0c70d80c943e54624/transformed/work-runtime-ktx-2.10.0/res
+app.le.bondstracker.app-foundation-layout-release-12 /Users/rajkiranbande/.gradle/caches/8.9/transforms/297bb63cfc75aa6e901e74f64701f127/transformed/foundation-layout-release/res
+app.le.bondstracker.app-activity-ktx-1.9.3-13 /Users/rajkiranbande/.gradle/caches/8.9/transforms/2a263bb0d8aa02fbc0bb2cffbd705a47/transformed/activity-ktx-1.9.3/res
+app.le.bondstracker.app-lifecycle-runtime-release-14 /Users/rajkiranbande/.gradle/caches/8.9/transforms/31b40248406fe606896e540224fc2fc8/transformed/lifecycle-runtime-release/res
+app.le.bondstracker.app-customview-poolingcontainer-1.0.0-15 /Users/rajkiranbande/.gradle/caches/8.9/transforms/32dd90d9ffef729c2507d178eb2c9061/transformed/customview-poolingcontainer-1.0.0/res
+app.le.bondstracker.app-hilt-navigation-1.2.0-16 /Users/rajkiranbande/.gradle/caches/8.9/transforms/34a6cbbc03fcb33507767268ef2e30f4/transformed/hilt-navigation-1.2.0/res
+app.le.bondstracker.app-lifecycle-livedata-core-2.8.7-17 /Users/rajkiranbande/.gradle/caches/8.9/transforms/3c1386cd0e1d92161216b8c975e55be0/transformed/lifecycle-livedata-core-2.8.7/res
+app.le.bondstracker.app-material-icons-extended-release-18 /Users/rajkiranbande/.gradle/caches/8.9/transforms/3da4f3c8d6e2736564debb1832def6ff/transformed/material-icons-extended-release/res
+app.le.bondstracker.app-datastore-preferences-release-19 /Users/rajkiranbande/.gradle/caches/8.9/transforms/45b855046258ab9ecae561b707551523/transformed/datastore-preferences-release/res
+app.le.bondstracker.app-graphics-path-1.0.1-20 /Users/rajkiranbande/.gradle/caches/8.9/transforms/49a0fc0989c0368eb4640fa251345998/transformed/graphics-path-1.0.1/res
+app.le.bondstracker.app-material3-release-21 /Users/rajkiranbande/.gradle/caches/8.9/transforms/4b93d54a8dc9956359462407779b253b/transformed/material3-release/res
+app.le.bondstracker.app-hilt-work-1.2.0-22 /Users/rajkiranbande/.gradle/caches/8.9/transforms/5034eaad44653e9b2bb4ffe4739610c6/transformed/hilt-work-1.2.0/res
+app.le.bondstracker.app-tracing-ktx-1.2.0-23 /Users/rajkiranbande/.gradle/caches/8.9/transforms/511e60b44ec690232be7742a8c3d9177/transformed/tracing-ktx-1.2.0/res
+app.le.bondstracker.app-datastore-core-release-24 /Users/rajkiranbande/.gradle/caches/8.9/transforms/53cae92934072ef26d90086780a42818/transformed/datastore-core-release/res
+app.le.bondstracker.app-navigation-compose-2.8.5-25 /Users/rajkiranbande/.gradle/caches/8.9/transforms/548a749ff50223fe5773a007c6c76c8e/transformed/navigation-compose-2.8.5/res
+app.le.bondstracker.app-startup-runtime-1.1.1-26 /Users/rajkiranbande/.gradle/caches/8.9/transforms/59ba4c8a39d7f8c714494ec9b5080e32/transformed/startup-runtime-1.1.1/res
+app.le.bondstracker.app-runtime-saveable-release-27 /Users/rajkiranbande/.gradle/caches/8.9/transforms/5c68299a1a775bf7c2a0f81fa6d352e1/transformed/runtime-saveable-release/res
+app.le.bondstracker.app-lifecycle-process-2.8.7-28 /Users/rajkiranbande/.gradle/caches/8.9/transforms/5e6fe20406eeb37894afa40d46ec264c/transformed/lifecycle-process-2.8.7/res
+app.le.bondstracker.app-ui-util-release-29 /Users/rajkiranbande/.gradle/caches/8.9/transforms/5ec4958e5477e0f34d8fc650383c57fa/transformed/ui-util-release/res
+app.le.bondstracker.app-navigation-runtime-ktx-2.8.5-30 /Users/rajkiranbande/.gradle/caches/8.9/transforms/65121e9bdcbaf58ed5c3ba7f8b1a83dd/transformed/navigation-runtime-ktx-2.8.5/res
+app.le.bondstracker.app-sqlite-2.4.0-31 /Users/rajkiranbande/.gradle/caches/8.9/transforms/66b3f4535a8022d2bdcc957f8a745e90/transformed/sqlite-2.4.0/res
+app.le.bondstracker.app-fragment-1.5.1-32 /Users/rajkiranbande/.gradle/caches/8.9/transforms/69898a7b81b4e5b0ddec3a6fdadc5e9a/transformed/fragment-1.5.1/res
+app.le.bondstracker.app-emoji2-1.3.0-33 /Users/rajkiranbande/.gradle/caches/8.9/transforms/6aca0f6748080f18fd90a6c8d411b22d/transformed/emoji2-1.3.0/res
+app.le.bondstracker.app-annotation-experimental-1.4.1-34 /Users/rajkiranbande/.gradle/caches/8.9/transforms/75cd552fb7c09874aac418cd37f44755/transformed/annotation-experimental-1.4.1/res
+app.le.bondstracker.app-ui-geometry-release-35 /Users/rajkiranbande/.gradle/caches/8.9/transforms/78bb06d6991671693c6c3f721e787335/transformed/ui-geometry-release/res
+app.le.bondstracker.app-savedstate-1.2.1-36 /Users/rajkiranbande/.gradle/caches/8.9/transforms/7dae618f4038a9d8425f0710f15a806f/transformed/savedstate-1.2.1/res
+app.le.bondstracker.app-ui-unit-release-37 /Users/rajkiranbande/.gradle/caches/8.9/transforms/8127a623cfb08d100eca82244c110da9/transformed/ui-unit-release/res
+app.le.bondstracker.app-hilt-navigation-compose-1.2.0-38 /Users/rajkiranbande/.gradle/caches/8.9/transforms/82e1ae716a8d806340827fda8661e51c/transformed/hilt-navigation-compose-1.2.0/res
+app.le.bondstracker.app-sqlite-framework-2.4.0-39 /Users/rajkiranbande/.gradle/caches/8.9/transforms/890087b2aeb2fa063106a35489ac5d2f/transformed/sqlite-framework-2.4.0/res
+app.le.bondstracker.app-profileinstaller-1.3.1-40 /Users/rajkiranbande/.gradle/caches/8.9/transforms/8ab12d5bcdf0ccef3e9c614cf50da525/transformed/profileinstaller-1.3.1/res
+app.le.bondstracker.app-lifecycle-runtime-ktx-release-41 /Users/rajkiranbande/.gradle/caches/8.9/transforms/8c96c3c85302e904f3e15c187b8f28bd/transformed/lifecycle-runtime-ktx-release/res
+app.le.bondstracker.app-savedstate-ktx-1.2.1-42 /Users/rajkiranbande/.gradle/caches/8.9/transforms/960ab7d060b81d315c76fe872fa5d44c/transformed/savedstate-ktx-1.2.1/res
+app.le.bondstracker.app-lifecycle-viewmodel-ktx-2.8.7-43 /Users/rajkiranbande/.gradle/caches/8.9/transforms/9b635f929441952a01e3c11fb23cdffc/transformed/lifecycle-viewmodel-ktx-2.8.7/res
+app.le.bondstracker.app-core-ktx-1.15.0-44 /Users/rajkiranbande/.gradle/caches/8.9/transforms/9d1b15deee32c60e1702864b6da7c884/transformed/core-ktx-1.15.0/res
+app.le.bondstracker.app-datastore-release-45 /Users/rajkiranbande/.gradle/caches/8.9/transforms/ac3257fd1af593f67e759f85127ab437/transformed/datastore-release/res
+app.le.bondstracker.app-core-runtime-2.2.0-46 /Users/rajkiranbande/.gradle/caches/8.9/transforms/b1a64bdc93242c49a35f56db08f3f5f6/transformed/core-runtime-2.2.0/res
+app.le.bondstracker.app-core-1.15.0-47 /Users/rajkiranbande/.gradle/caches/8.9/transforms/b332d500ae6fbf77a75ab7e1d2f95b21/transformed/core-1.15.0/res
+app.le.bondstracker.app-lifecycle-livedata-core-ktx-2.8.7-48 /Users/rajkiranbande/.gradle/caches/8.9/transforms/b9f93d62641798baa321da7de6ef0cfe/transformed/lifecycle-livedata-core-ktx-2.8.7/res
+app.le.bondstracker.app-room-runtime-2.6.1-49 /Users/rajkiranbande/.gradle/caches/8.9/transforms/be52daaf248d6817ef9218f9f0efd8ef/transformed/room-runtime-2.6.1/res
+app.le.bondstracker.app-runtime-release-50 /Users/rajkiranbande/.gradle/caches/8.9/transforms/ccc0729a9fa825b244b5890e680eccec/transformed/runtime-release/res
+app.le.bondstracker.app-navigation-runtime-2.8.5-51 /Users/rajkiranbande/.gradle/caches/8.9/transforms/d093f2a6f558461c9ede97c816067f78/transformed/navigation-runtime-2.8.5/res
+app.le.bondstracker.app-animation-core-release-52 /Users/rajkiranbande/.gradle/caches/8.9/transforms/d5f815e1e7cb8c14119542fd00549d0c/transformed/animation-core-release/res
+app.le.bondstracker.app-lifecycle-service-2.8.7-53 /Users/rajkiranbande/.gradle/caches/8.9/transforms/dbc07e06e6b29755a6a59b48334bb86b/transformed/lifecycle-service-2.8.7/res
+app.le.bondstracker.app-ui-tooling-preview-release-54 /Users/rajkiranbande/.gradle/caches/8.9/transforms/dde8b18c692d18245feaab6e3c32259b/transformed/ui-tooling-preview-release/res
+app.le.bondstracker.app-activity-1.9.3-55 /Users/rajkiranbande/.gradle/caches/8.9/transforms/e158f6591782afa928fa41a3486ad5b9/transformed/activity-1.9.3/res
+app.le.bondstracker.app-ui-graphics-release-56 /Users/rajkiranbande/.gradle/caches/8.9/transforms/e8e4546ff90c063bc3583d2f0a2d9510/transformed/ui-graphics-release/res
+app.le.bondstracker.app-navigation-common-ktx-2.8.5-57 /Users/rajkiranbande/.gradle/caches/8.9/transforms/f025619a65bae378af54468dfb0677f7/transformed/navigation-common-ktx-2.8.5/res
+app.le.bondstracker.app-animation-release-58 /Users/rajkiranbande/.gradle/caches/8.9/transforms/f05240ec6c57871b258cb654d57611b9/transformed/animation-release/res
+app.le.bondstracker.app-ui-release-59 /Users/rajkiranbande/.gradle/caches/8.9/transforms/f16a83c86e3c87c60c8578fd74895a8d/transformed/ui-release/res
+app.le.bondstracker.app-activity-compose-1.9.3-60 /Users/rajkiranbande/.gradle/caches/8.9/transforms/f5bad96294ab84e76dac57b827b66009/transformed/activity-compose-1.9.3/res
+app.le.bondstracker.app-work-runtime-2.10.0-61 /Users/rajkiranbande/.gradle/caches/8.9/transforms/f6d0c4844eab3377e3b8d6f4d6b771b2/transformed/work-runtime-2.10.0/res
+app.le.bondstracker.app-foundation-release-62 /Users/rajkiranbande/.gradle/caches/8.9/transforms/facca113dc47f8e427a61e64de25f8b3/transformed/foundation-release/res
+app.le.bondstracker.app-pngs-63 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/build/generated/res/pngs/release
+app.le.bondstracker.app-resValues-64 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/build/generated/res/resValues/release
+app.le.bondstracker.app-packageReleaseResources-65 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/build/intermediates/incremental/release/packageReleaseResources/merged.dir
+app.le.bondstracker.app-packageReleaseResources-66 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/build/intermediates/incremental/release/packageReleaseResources/stripped.dir
+app.le.bondstracker.app-release-67 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/build/intermediates/merged_res/release/mergeReleaseResources
+app.le.bondstracker.app-main-68 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/src/main/res
+app.le.bondstracker.app-release-69 /Users/rajkiranbande/Antigravity/Bonds Tracker/app/src/release/res

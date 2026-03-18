@@ -1,0 +1,32 @@
+package app.le.bondstracker.domain.model
+
+data class Bond(
+    val investmentId: String,
+    val createdAt: String,
+    val platform: String,
+    val investor: String,
+    val companyName: String,
+    val bondCategory: String,
+    val bondType: List<String>,
+    val status: String,
+    val currency: String,
+    val investmentAmount: Double,
+    val faceValuePerUnit: Double,
+    val units: Int,
+    val currentValue: Double?,
+    val outstandingPrincipal: Double,
+    val returnsReceived: Double,
+    val gains: Double?,
+    val totalPrincipalRepaid: Double,
+    val interestRate: Double,
+    val couponRate: Double,
+    val payoutFrequency: String,
+    val startDate: String,
+    val orderDate: String,
+    val maturityDate: String,
+    val tenureMonths: Int,
+    val interestPaid: Double,
+    val nextPayoutDate: String?,
+    val notes: String?,
+    val payouts: List<Payout>
+)
