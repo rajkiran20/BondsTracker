@@ -22,8 +22,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
-import androidx.compose.material.icons.filled.Sort
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -89,7 +89,7 @@ fun HomeScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                             Icon(
-                                Icons.Default.TrendingUp,
+                                Icons.AutoMirrored.Filled.TrendingUp,
                                 contentDescription = null,
                                 tint = GoldPrimary,
                                 modifier = Modifier.size(28.dp)
@@ -130,12 +130,27 @@ fun HomeScreen(
                                     text = { Text("Export investments", color = TextPrimary) },
                                     onClick = {
                                         val json = viewModel.exportBondsToJson()
-                                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                            putExtra(Intent.EXTRA_TEXT, json)
-                                            type = "application/json"
+                                        try {
+                                            var folder = java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Bond Investments")
+                                            if (!folder.exists()) {
+                                                val created = folder.mkdirs()
+                                                if (!created) {
+                                                    // Fallback to app-specific directory if no permission
+                                                    folder = java.io.File(context.getExternalFilesDir(null), "Bond Investments")
+                                                    folder.mkdirs()
+                                                }
+                                            }
+                                            val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.US)
+                                            val timeFormat = SimpleDateFormat("HH-mm-ss", Locale.US)
+                                            val dateStr = dateFormat.format(java.util.Date())
+                                            val timeStr = timeFormat.format(java.util.Date())
+                                            val fileName = "AllBonds-$dateStr-$timeStr.json"
+                                            val file = java.io.File(folder, fileName)
+                                            file.writeText(json)
+                                            android.widget.Toast.makeText(context, "Saved to ${file.absolutePath}", android.widget.Toast.LENGTH_LONG).show()
+                                        } catch (e: Exception) {
+                                            android.widget.Toast.makeText(context, "Failed to save: ${e.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
                                         }
-                                        val shareIntent = Intent.createChooser(sendIntent, "Export Bonds JSON")
-                                        context.startActivity(shareIntent)
                                         topMenuExpanded = false
                                     }
                                 )
@@ -227,9 +242,9 @@ fun HomeScreen(
                         Box {
                             IconButton(onClick = { sortMenuExpanded = true }) {
                                 Icon(
-                                    Icons.Default.Sort,
+                                    Icons.AutoMirrored.Filled.Sort,
                                     contentDescription = "Sort bonds",
-                                    tint = if (state.selectedSortOption != SortOption.CHRONOLOGICAL) GoldPrimary else TextSecondary,
+                                    tint = if (state.selectedSortOption != SortOption.EARLIEST_PAYOUT) GoldPrimary else TextSecondary,
                                     modifier = Modifier.size(22.dp)
                                 )
                             }
@@ -239,7 +254,14 @@ fun HomeScreen(
                                 containerColor = NavyCard
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Latest", color = if (state.selectedSortOption == SortOption.CHRONOLOGICAL) GoldPrimary else TextPrimary) },
+                                    text = { Text("Earliest Payout", color = if (state.selectedSortOption == SortOption.EARLIEST_PAYOUT) GoldPrimary else TextPrimary) },
+                                    onClick = { 
+                                        viewModel.selectSortOption(SortOption.EARLIEST_PAYOUT)
+                                        sortMenuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Recently Added", color = if (state.selectedSortOption == SortOption.CHRONOLOGICAL) GoldPrimary else TextPrimary) },
                                     onClick = { 
                                         viewModel.selectSortOption(SortOption.CHRONOLOGICAL)
                                         sortMenuExpanded = false
@@ -610,7 +632,7 @@ private fun EmptyState(isFiltered: Boolean, onClearFilters: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            Icons.Default.TrendingUp,
+            Icons.AutoMirrored.Filled.TrendingUp,
             contentDescription = null,
             tint = TextMuted,
             modifier = Modifier.size(64.dp)
@@ -670,7 +692,19 @@ private fun formatDateString(dateStr: String?): String {
         } catch (e: Exception) { null }
 
         if (parsedDate != null) {
-            SimpleDateFormat("dd/MM/yyyy", Locale.US).format(parsedDate)
+            val calendarDate = java.util.Calendar.getInstance().apply { time = parsedDate }
+            val now = java.util.Calendar.getInstance()
+            
+            val isToday = calendarDate.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+                          calendarDate.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+            
+            now.add(java.util.Calendar.DAY_OF_YEAR, 1)
+            val isTomorrow = calendarDate.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+                             calendarDate.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+            
+            if (isToday) "Today"
+            else if (isTomorrow) "Tomorrow"
+            else SimpleDateFormat("dd/MM/yyyy", Locale.US).format(parsedDate)
         } else dateStr
     } catch (e: Exception) {
         dateStr

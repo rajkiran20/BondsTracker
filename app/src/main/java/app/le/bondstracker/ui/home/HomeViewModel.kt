@@ -40,10 +40,11 @@ data class HomeUiState(
     val selectedPlatforms: Set<String> = emptySet(),
     val selectedInvestors: Set<String> = emptySet(),
     val selectedStatuses: Set<String> = emptySet(),
-    val selectedSortOption: SortOption = SortOption.EARLIEST_MATURITY
+    val selectedSortOption: SortOption = SortOption.EARLIEST_PAYOUT
 )
 
 enum class SortOption {
+    EARLIEST_PAYOUT,
     EARLIEST_MATURITY,
     CHRONOLOGICAL,
     INTEREST_RATE,
@@ -59,7 +60,7 @@ class HomeViewModel @Inject constructor(
     private val _selectedPlatforms = MutableStateFlow<Set<String>>(emptySet())
     private val _selectedInvestors = MutableStateFlow<Set<String>>(emptySet())
     private val _selectedStatuses = MutableStateFlow<Set<String>>(emptySet())
-    private val _selectedSortOption = MutableStateFlow(SortOption.EARLIEST_MATURITY)
+    private val _selectedSortOption = MutableStateFlow(SortOption.EARLIEST_PAYOUT)
 
     val uiState: StateFlow<HomeUiState> = combine(
         repository.getAllBonds(),
@@ -68,8 +69,35 @@ class HomeViewModel @Inject constructor(
         _selectedStatuses,
         _selectedSortOption
     ) { rawBonds, platforms, investors, statuses, sortOption ->
-        val bonds = rawBonds.map {
-            if (it.status.equals("closed", ignoreCase = true)) it.copy(status = "matured") else it
+        val today = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val bonds = rawBonds.map { rawBond ->
+            val bondStatus = if (rawBond.status.equals("closed", ignoreCase = true)) "matured" else rawBond.status
+            var dynamicNextPayout = rawBond.nextPayoutDate
+            
+            if (rawBond.payouts.isNotEmpty() && bondStatus.equals("active", ignoreCase = true)) {
+                val futureOrTodayPayouts = rawBond.payouts.filter { p ->
+                    try {
+                        val format = if (p.date.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                        val t = format.parse(p.date)?.time ?: 0L
+                        t >= today
+                    } catch (e: Exception) { false }
+                }
+                
+                dynamicNextPayout = futureOrTodayPayouts.minByOrNull { p ->
+                    try {
+                        val format = if (p.date.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                        format.parse(p.date)?.time ?: Long.MAX_VALUE
+                    } catch (e: Exception) { Long.MAX_VALUE }
+                }?.date
+            }
+            
+            rawBond.copy(status = bondStatus, nextPayoutDate = dynamicNextPayout)
         }
         
         val filtered = bonds
@@ -78,6 +106,7 @@ class HomeViewModel @Inject constructor(
             .let { list -> if (statuses.isNotEmpty()) list.filter { it.status.replaceFirstChar { c -> c.uppercase() } in statuses } else list }
 
         val sorted = when (sortOption) {
+            SortOption.EARLIEST_PAYOUT -> filtered.sortedBy { getNextPayoutTime(it.nextPayoutDate, it.status) }
             SortOption.CHRONOLOGICAL -> filtered.sortedByDescending { it.orderDate }
             SortOption.INTEREST_RATE -> filtered.sortedByDescending { it.interestRate }
             SortOption.INVESTMENT_AMOUNT -> filtered.sortedByDescending { it.investmentAmount }
@@ -162,6 +191,17 @@ class HomeViewModel @Inject constructor(
         // Ensure exported JSON matches the DTO schema perfectly so imports don't crash
         val dtos = uiState.value.bonds.map { it.toDto() }
         return gson.toJson(dtos)
+    }
+
+    private fun getNextPayoutTime(dateStr: String?, status: String): Long {
+        if (!status.equals("active", ignoreCase = true)) return Long.MAX_VALUE
+        if (dateStr.isNullOrBlank()) return Long.MAX_VALUE
+        return try {
+            val format = if (dateStr.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            format.parse(dateStr)?.time ?: Long.MAX_VALUE
+        } catch (e: Exception) {
+            Long.MAX_VALUE
+        }
     }
 
     private fun getTenureDays(startStr: String?, maturityStr: String?): Long {
