@@ -6,6 +6,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import app.le.bondstracker.ui.addbond.AddBondScreen
 import app.le.bondstracker.ui.detail.BondDetailScreen
 import app.le.bondstracker.ui.home.HomeScreen
@@ -35,6 +36,9 @@ fun AppNavGraph(navController: NavHostController) {
             route = Screen.BondDetail().route,
             arguments = listOf(
                 navArgument("bondId") { type = NavType.StringType }
+            ),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "app://bonds/detail/{bondId}" }
             )
         ) { backStack ->
             val bondId = backStack.arguments?.getString("bondId") ?: return@composable

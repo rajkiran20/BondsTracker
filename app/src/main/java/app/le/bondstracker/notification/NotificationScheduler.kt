@@ -19,9 +19,27 @@ class NotificationScheduler @Inject constructor(
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
+    private fun formatPayoutDate(targetDate: String): String {
+        return try {
+            val date = LocalDate.parse(targetDate, dateFormatter)
+            val month = date.month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
+            val day = date.dayOfMonth
+            "$day $month"
+        } catch (e: Exception) {
+            targetDate
+        }
+    }
+
+    private fun formatAmount(amount: Double): String {
+        val format = java.text.NumberFormat.getNumberInstance(java.util.Locale("en", "IN"))
+        format.maximumFractionDigits = 0
+        return "₹${format.format(amount)}"
+    }
+
     fun schedulePayoutReminder(
         bondId: String,
         companyName: String,
+        investorName: String,
         payoutDate: String,
         amount: Double
     ) {
@@ -29,22 +47,25 @@ class NotificationScheduler @Inject constructor(
             tag = "payout_${bondId}_${payoutDate}",
             targetDate = payoutDate,
             title = "Payout Due — $companyName",
-            body = "Your payout of ₹${"%.2f".format(amount)} is scheduled today.",
-            notificationId = "payout_${bondId}".hashCode()
+            body = "of ${formatAmount(amount)} for $investorName on ${formatPayoutDate(payoutDate)}",
+            notificationId = "payout_${bondId}".hashCode(),
+            bondId = bondId
         )
     }
 
     fun scheduleMaturityReminder(
         bondId: String,
         companyName: String,
+        investorName: String,
         maturityDate: String
     ) {
         scheduleReminder(
             tag = "maturity_${bondId}",
             targetDate = maturityDate,
             title = "Bond Maturity — $companyName",
-            body = "Your bond matures today! Check your account for the final payout.",
-            notificationId = "maturity_${bondId}".hashCode()
+            body = "Your bond for $investorName matures on ${formatPayoutDate(maturityDate)}! Check your account for the final payout.",
+            notificationId = "maturity_${bondId}".hashCode(),
+            bondId = bondId
         )
     }
 
@@ -53,7 +74,8 @@ class NotificationScheduler @Inject constructor(
         targetDate: String,
         title: String,
         body: String,
-        notificationId: Int
+        notificationId: Int,
+        bondId: String
     ) {
         try {
             val date = LocalDate.parse(targetDate, dateFormatter)
@@ -73,6 +95,8 @@ class NotificationScheduler @Inject constructor(
                 .putString(KEY_NOTIFICATION_TITLE, title)
                 .putString(KEY_NOTIFICATION_BODY, body)
                 .putInt(KEY_NOTIFICATION_ID, notificationId)
+                .putString(KEY_BOND_ID, bondId)
+                .putString("tag", tag)
                 .build()
 
             val workRequest = OneTimeWorkRequestBuilder<BondReminderWorker>()

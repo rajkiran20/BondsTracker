@@ -29,6 +29,7 @@ class RescheduleWorker @AssistedInject constructor(
                         notificationScheduler.schedulePayoutReminder(
                             bondId = bond.investmentId,
                             companyName = bond.companyName,
+                            investorName = bond.investor,
                             payoutDate = payout.date,
                             amount = payout.amount
                         )
@@ -43,6 +44,7 @@ class RescheduleWorker @AssistedInject constructor(
                         notificationScheduler.scheduleMaturityReminder(
                             bondId = bond.investmentId,
                             companyName = bond.companyName,
+                            investorName = bond.investor,
                             maturityDate = bond.maturityDate
                         )
                     } catch (e: Exception) {
