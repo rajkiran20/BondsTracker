@@ -28,6 +28,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import app.le.bondstracker.R
 import app.le.bondstracker.domain.model.Bond
 import app.le.bondstracker.domain.model.Payout
 import app.le.bondstracker.ui.theme.*
@@ -213,11 +216,23 @@ private fun BondHeroCard(bond: Bond) {
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text(
-                        bond.platform,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GoldPrimary
-                    )
+                    val iconRes = getPlatformIcon(bond.platform)
+                    if (iconRes != null) {
+                        Image(
+                            painter = painterResource(id = iconRes),
+                            contentDescription = bond.platform,
+                            modifier = Modifier
+                                .height(18.dp)
+                                .widthIn(max = 100.dp)
+                        )
+                    } else {
+                        Text(
+                            bond.platform,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = GoldPrimary
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         bond.investor,
                         style = MaterialTheme.typography.bodySmall,
@@ -476,5 +491,13 @@ private fun calculateTenure(startDateStr: String?, maturityDateStr: String?): St
         return if (parts.isEmpty()) "0W" else parts.joinToString("")
     } catch (e: Exception) {
         return "0W"
+    }
+}
+
+private fun getPlatformIcon(platform: String): Int? {
+    return when (platform.lowercase(Locale.ROOT).trim()) {
+        "jiraaf" -> R.drawable.ic_jiraaf
+        "stable money", "stablemoney" -> R.drawable.ic_stablemoney
+        else -> null
     }
 }
