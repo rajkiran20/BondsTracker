@@ -447,6 +447,12 @@ private fun calculateTenure(startDateStr: String?, maturityDateStr: String?): St
         
         if (start == null || end == null) return "0W"
 
+        val diffInMs = end.time - start.time
+        val diffInDays = java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diffInMs)
+        if (diffInDays < 120) {
+            return "${maxOf(0L, diffInDays)}D"
+        }
+
         val startCal = Calendar.getInstance().apply { time = start }
         val endCal = Calendar.getInstance().apply { time = end }
 
