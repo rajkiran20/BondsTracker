@@ -20,6 +20,8 @@ data class PortfolioSummary(
     val title: String,
     val totalInvested: Double,
     val totalReturns: Double,
+    val totalPrincipalReceived: Double,
+    val totalInterestReceived: Double,
     val bondCount: Int,
     val bondCountLabel: String
 )
@@ -28,9 +30,9 @@ data class HomeUiState(
     val bonds: List<Bond> = emptyList(),
     val filteredBonds: List<Bond> = emptyList(),
     
-    val overallSummary: PortfolioSummary = PortfolioSummary("Overall Portfolio", 0.0, 0.0, 0, "Total Bonds"),
-    val activeSummary: PortfolioSummary = PortfolioSummary("Active Bonds", 0.0, 0.0, 0, "Active Bonds"),
-    val closedSummary: PortfolioSummary = PortfolioSummary("Closed/Matured", 0.0, 0.0, 0, "Closed Bonds"),
+    val overallSummary: PortfolioSummary = PortfolioSummary("Overall Portfolio", 0.0, 0.0, 0.0, 0.0, 0, "Total Bonds"),
+    val activeSummary: PortfolioSummary = PortfolioSummary("Active Bonds", 0.0, 0.0, 0.0, 0.0, 0, "Active Bonds"),
+    val closedSummary: PortfolioSummary = PortfolioSummary("Closed/Matured", 0.0, 0.0, 0.0, 0.0, 0, "Closed Bonds"),
     
     val isLoading: Boolean = true,
     // Filter state
@@ -123,21 +125,81 @@ class HomeViewModel @Inject constructor(
             overallSummary = PortfolioSummary(
                 title = "Overall Portfolio",
                 totalInvested = bonds.sumOf { it.investmentAmount },
-                totalReturns = bonds.sumOf { it.returnsReceived },
+                totalReturns = bonds.sumOf { 
+                    if (it.returnsReceived == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.amount }
+                    } else {
+                        it.returnsReceived
+                    }
+                },
+                totalPrincipalReceived = bonds.sumOf { 
+                    if (it.totalPrincipalRepaid == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.principalComponent }
+                    } else {
+                        it.totalPrincipalRepaid
+                    }
+                },
+                totalInterestReceived = bonds.sumOf { 
+                    if (it.interestPaid == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.interestComponent }
+                    } else {
+                        it.interestPaid
+                    }
+                },
                 bondCount = bonds.size,
                 bondCountLabel = "Total Bonds"
             ),
             activeSummary = PortfolioSummary(
                 title = "Active Portfolio",
                 totalInvested = activeBonds.sumOf { it.investmentAmount },
-                totalReturns = activeBonds.sumOf { it.returnsReceived },
+                totalReturns = activeBonds.sumOf { 
+                    if (it.returnsReceived == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.amount }
+                    } else {
+                        it.returnsReceived
+                    }
+                },
+                totalPrincipalReceived = activeBonds.sumOf { 
+                    if (it.totalPrincipalRepaid == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.principalComponent }
+                    } else {
+                        it.totalPrincipalRepaid
+                    }
+                },
+                totalInterestReceived = activeBonds.sumOf { 
+                    if (it.interestPaid == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.interestComponent }
+                    } else {
+                        it.interestPaid
+                    }
+                },
                 bondCount = activeBonds.size,
                 bondCountLabel = "Active Bonds"
             ),
             closedSummary = PortfolioSummary(
                 title = "Closed/Matured Portfolio",
                 totalInvested = closedBonds.sumOf { it.investmentAmount },
-                totalReturns = closedBonds.sumOf { it.returnsReceived },
+                totalReturns = closedBonds.sumOf { 
+                    if (it.returnsReceived == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.amount }
+                    } else {
+                        it.returnsReceived
+                    }
+                },
+                totalPrincipalReceived = closedBonds.sumOf { 
+                    if (it.totalPrincipalRepaid == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.principalComponent }
+                    } else {
+                        it.totalPrincipalRepaid
+                    }
+                },
+                totalInterestReceived = closedBonds.sumOf { 
+                    if (it.interestPaid == 0.0) {
+                        it.payouts.filter { p -> p.status.lowercase() == "received" }.sumOf { p -> p.interestComponent }
+                    } else {
+                        it.interestPaid
+                    }
+                },
                 bondCount = closedBonds.size,
                 bondCountLabel = "Closed Bonds"
             ),

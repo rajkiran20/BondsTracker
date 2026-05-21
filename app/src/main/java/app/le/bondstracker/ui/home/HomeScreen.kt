@@ -475,9 +475,10 @@ private fun PortfolioSummaryCard(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            SummaryMetric("Total Invested", "₹${formatPortfolioAmount(summary.totalInvested)}")
-                            SummaryMetric("Returns Received", "₹${formatPortfolioAmount(summary.totalReturns)}")
-                            SummaryMetric(summary.bondCountLabel, summary.bondCount.toString())
+                            SummaryMetric("Total Invested", "₹${formatPortfolioAmount(summary.totalInvested)}", Modifier.weight(1f))
+                            SummaryMetric("Principal Repaid", "₹${formatPortfolioAmount(summary.totalPrincipalReceived)}", Modifier.weight(1f))
+                            SummaryMetric("Interest Paid", "₹${formatPortfolioAmount(summary.totalInterestReceived)}", Modifier.weight(1f))
+                            SummaryMetric(summary.bondCountLabel, summary.bondCount.toString(), Modifier.weight(1f))
                         }
                     }
                 }
@@ -504,11 +505,14 @@ private fun PortfolioSummaryCard(
 }
 
 @Composable
-private fun SummaryMetric(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun SummaryMetric(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text(value, style = MaterialTheme.typography.titleMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(2.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary, textAlign = TextAlign.Center)
     }
 }
 
