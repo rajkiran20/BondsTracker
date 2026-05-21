@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.BusinessCenter
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Schedule
@@ -24,10 +23,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
+import app.le.bondstracker.R
 import app.le.bondstracker.domain.model.Bond
 import app.le.bondstracker.domain.model.Payout
 import app.le.bondstracker.ui.theme.*
@@ -36,7 +40,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Calendar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BondDetailScreen(
     bondId: String,
@@ -44,6 +47,20 @@ fun BondDetailScreen(
     viewModel: BondDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    BondDetailScreen(
+        state = state,
+        onNavigateBack = onNavigateBack,
+        onDeleteBond = { viewModel.deleteBond(onSuccess = onNavigateBack) }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BondDetailScreen(
+    state: DetailUiState,
+    onNavigateBack: () -> Unit,
+    onDeleteBond: () -> Unit
+) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     if (showDeleteDialog) {
@@ -54,7 +71,7 @@ fun BondDetailScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
-                    viewModel.deleteBond { onNavigateBack() }
+                    onDeleteBond()
                 }) {
                     Text("Delete", color = RedError)
                 }
@@ -112,7 +129,7 @@ fun BondDetailScreen(
                 Text("Bond not found", color = TextSecondary)
             }
 
-            else -> BondDetailContent(bond = state.bond!!, paddingValues = padding)
+            else -> BondDetailContent(bond = state.bond, paddingValues = padding)
         }
     }
 }
@@ -197,6 +214,7 @@ private fun BondHeroCard(bond: Bond) {
     ) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val iconRes = getPlatformIcon(bond.platform)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -204,24 +222,31 @@ private fun BondHeroCard(bond: Bond) {
                         .background(GoldDark),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.BusinessCenter,
-                        contentDescription = null,
-                        tint = TextPrimary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    if (iconRes != null) {
+                        Image(
+                            painter = painterResource(id = iconRes),
+                            contentDescription = bond.platform,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = bond.platform.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text(
-                        bond.platform,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = GoldPrimary
-                    )
-                    Text(
                         bond.investor,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
+                        style = MaterialTheme.typography.titleLarge,
+                        color = GoldPrimary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -482,5 +507,89 @@ private fun calculateTenure(startDateStr: String?, maturityDateStr: String?): St
         return if (parts.isEmpty()) "0W" else parts.joinToString("")
     } catch (e: Exception) {
         return "0W"
+    }
+}
+
+private fun getPlatformIcon(platform: String): Int? {
+    return when (platform.lowercase(Locale.ROOT).trim()) {
+        "jiraaf" -> R.drawable.ic_jiraaf
+        "stable money", "stablemoney" -> R.drawable.ic_stablemoney
+        else -> null
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BondDetailScreenPreview() {
+    BondsTrackerTheme {
+        val samplePayouts = listOf(
+            Payout(
+                payoutId = "1",
+                date = "2024-03-15",
+                payoutType = "Interest",
+                amount = 1200.0,
+                principalComponent = 0.0,
+                interestComponent = 1200.0,
+                status = "received"
+            ),
+            Payout(
+                payoutId = "2",
+                date = "2024-06-15",
+                payoutType = "Interest",
+                amount = 1200.0,
+                principalComponent = 0.0,
+                interestComponent = 1200.0,
+                status = "pending"
+            )
+        )
+
+        val sampleBond = Bond(
+            investmentId = "bond_123",
+            createdAt = "2023-12-15",
+            platform = "Jiraaf",
+            investor = "John Doe",
+            companyName = "Green Energy Corp",
+            bondCategory = "Corporate",
+            bondType = listOf("Senior Secured", "Taxable"),
+            status = "Active",
+            currency = "INR",
+            investmentAmount = 100000.0,
+            faceValuePerUnit = 1000.0,
+            units = 100,
+            currentValue = 100000.0,
+            outstandingPrincipal = 100000.0,
+            returnsReceived = 1200.0,
+            gains = 1200.0,
+            totalPrincipalRepaid = 0.0,
+            interestRate = 12.0,
+            couponRate = 11.5,
+            payoutFrequency = "Quarterly",
+            startDate = "2023-06-15",
+            orderDate = "2023-06-10",
+            maturityDate = "2023-08-15",
+            tenureMonths = 3,
+            interestPaid = 1200.0,
+            nextPayoutDate = "2024-06-15",
+            notes = "This is a sample note for the bond investment.",
+            payouts = samplePayouts
+        )
+
+        BondDetailScreen(
+            state = DetailUiState(bond = sampleBond, isLoading = false),
+            onNavigateBack = {},
+            onDeleteBond = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BondDetailScreenLoadingPreview() {
+    BondsTrackerTheme {
+        BondDetailScreen(
+            state = DetailUiState(isLoading = true),
+            onNavigateBack = {},
+            onDeleteBond = {}
+        )
     }
 }

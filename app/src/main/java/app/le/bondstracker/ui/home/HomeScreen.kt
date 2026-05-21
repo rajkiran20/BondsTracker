@@ -39,6 +39,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import app.le.bondstracker.R
 import app.le.bondstracker.domain.model.Bond
 import app.le.bondstracker.ui.theme.*
 
@@ -565,12 +568,23 @@ private fun BondCard(bond: Bond, onClick: () -> Unit) {
                             color = TextSecondary,
                             fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            text = bond.platform,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = GoldPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
+                        val iconRes = getPlatformIcon(bond.platform)
+                        if (iconRes != null) {
+                            Image(
+                                painter = painterResource(id = iconRes),
+                                contentDescription = bond.platform,
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .widthIn(max = 80.dp)
+                            )
+                        } else {
+                            Text(
+                                text = bond.platform,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = GoldPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -712,5 +726,13 @@ private fun formatDateString(dateStr: String?): String {
         } else dateStr
     } catch (e: Exception) {
         dateStr
+    }
+}
+
+private fun getPlatformIcon(platform: String): Int? {
+    return when (platform.lowercase(Locale.ROOT).trim()) {
+        "jiraaf" -> R.drawable.ic_jiraaf
+        "stable money", "stablemoney" -> R.drawable.ic_stablemoney
+        else -> null
     }
 }
