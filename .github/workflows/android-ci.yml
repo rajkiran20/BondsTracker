@@ -7,24 +7,20 @@ on:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Release APK
     runs-on: ubuntu-latest
 
     outputs:
       release_tag: ${{ steps.generate_tag.outputs.tag }}
 
     steps:
-      # ─────────────────────────────────────────
-      # 1. Checkout the code
-      # ─────────────────────────────────────────
+      # Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed for commit log generation
+          fetch-depth: 0
 
-      # ─────────────────────────────────────────
-      # Setup Java (required for Android builds)
-      # ─────────────────────────────────────────
+      # Setup Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -32,9 +28,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # ─────────────────────────────────────────
-      # Cache Gradle dependencies
-      # ─────────────────────────────────────────
+      # Cache Gradle packages
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
@@ -45,21 +39,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # ─────────────────────────────────────────
-      # Make gradlew executable
-      # ─────────────────────────────────────────
+      # Grant execute permission for gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # ─────────────────────────────────────────
-      # 2. Run assembleDebug
-      # ─────────────────────────────────────────
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      # Build Release APK
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
 
-      # ─────────────────────────────────────────
-      # Generate a unique release tag
-      # ─────────────────────────────────────────
+      # Generate Release Tag
       - name: Generate Release Tag
         id: generate_tag
         run: |
@@ -67,147 +55,89 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "Generated tag: ${TAG}"
 
-      # ─────────────────────────────────────────
-      # Upload APK artifact (passed to release job)
-      # ─────────────────────────────────────────
+      # Upload APK Artifact
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: app-release
+          path: app/build/outputs/apk/release/app-release.apk
           retention-days: 1
 
-  # ───────────────────────────────────────────────────────
-  # Create GitHub Release with APK and commit changelog
-  # ───────────────────────────────────────────────────────
   release:
-    name: Create GitHub Release
+    name: Distribute on Firebase
     needs: build
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # Required to create releases and tags
+      contents: write
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history needed to walk back to the last release tag
+          fetch-depth: 0
 
-      # ─────────────────────────────────────────
-      # Download the APK from the build job
-      # ─────────────────────────────────────────
+      # Download the Release APK Artifact
       - name: Download APK Artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-debug
+          name: app-release
           path: ./artifacts
 
-      # ─────────────────────────────────────────
-      # Verify APK exists before proceeding
-      # ─────────────────────────────────────────
+      # Verify APK exists
       - name: Verify APK
         run: |
           echo "Contents of artifacts directory:"
           ls -lh ./artifacts/
-          test -f ./artifacts/app-debug.apk \
-            && echo "✅ APK found" \
-            || (echo "❌ APK not found" && exit 1)
+          test -f ./artifacts/app-release.apk && echo "✅ APK found" || (echo "❌ APK not found" && exit 1)
 
-      # ─────────────────────────────────────────
-      # Rename APK to include timestamp and SHA
-      # ─────────────────────────────────────────
+      # Rename APK
       - name: Rename APK
         id: rename_apk
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
           TIMESTAMP="$(date +'%Y%m%d%H%M%S')"
-          NEW_NAME="app-debug-${TIMESTAMP}-${SHORT_SHA}.apk"
-          mv ./artifacts/app-debug.apk ./artifacts/${NEW_NAME}
+          NEW_NAME="app-release-${TIMESTAMP}-${SHORT_SHA}.apk"
+          mv ./artifacts/app-release.apk ./artifacts/${NEW_NAME}
           echo "apk_name=${NEW_NAME}" >> $GITHUB_OUTPUT
           echo "Renamed APK to: ${NEW_NAME}"
 
-      # ─────────────────────────────────────────
-      # Build the changelog from commits since
-      # the last release tag. Falls back to all
-      # commits if no previous release exists.
-      # ─────────────────────────────────────────
+      # Generate Changelog
       - name: Generate Changelog
         id: changelog
         run: |
-          # Fetch all tags so we can find the latest release tag
           git fetch --tags
-
-          # Find the most recent tag that matches our release naming pattern
-          LAST_TAG=$(git tag --list 'release-*' \
-            --sort=-creatordate \
-            | head -n 1)
-
+          LAST_TAG=$(git tag --list 'release-*' --sort=-creatordate | head -n 1)
           echo "Last release tag: '${LAST_TAG}'"
-
           if [ -z "${LAST_TAG}" ]; then
-            echo "No previous release tag found. Listing all commits."
-            # No previous release — include every commit up to HEAD
-            COMMIT_LOG=$(git log HEAD \
-              --pretty=format:"- [%h](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/%H) %s — _%an_" \
-              --no-merges)
+            COMMIT_LOG=$(git log HEAD --pretty=format:"- [%h](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/%H) %s — _%an_" --no-merges)
           else
-            echo "Generating changelog since tag: ${LAST_TAG}"
-            # Include only commits that happened after the last release tag
-            COMMIT_LOG=$(git log "${LAST_TAG}..HEAD" \
-              --pretty=format:"- [%h](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/%H) %s — _%an_" \
-              --no-merges)
+            COMMIT_LOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- [%h](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/%H) %s — _%an_" --no-merges)
           fi
-
-          # Handle the edge case where there are no new commits
           if [ -z "${COMMIT_LOG}" ]; then
             COMMIT_LOG="_No new commits since the last release._"
           fi
-
-          echo "Changelog:"
-          echo "${COMMIT_LOG}"
-
-          # Write to a dedicated file to safely preserve
-          # newlines and special characters across steps
           echo "${COMMIT_LOG}" > changelog.txt
-
-          # Also store the last tag for use in the release body
           echo "last_tag=${LAST_TAG}" >> $GITHUB_OUTPUT
 
-      # ─────────────────────────────────────────
-      # Create the GitHub Release
-      # ─────────────────────────────────────────
+      # Create GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.build.outputs.release_tag }}
-          name: "🚀 Debug Build — ${{ needs.build.outputs.release_tag }}"
-          body: |
-            ## ✅ Automated Debug Build
-
-            | Field      | Value                                     |
-            |------------|-------------------------------------------|
-            | **Branch** | `${{ github.ref_name }}`                  |
-            | **Commit** | `${{ github.sha }}`                       |
-            | **Author** | ${{ github.event.pusher.name }}           |
-            | **Built At** | ${{ github.event.head_commit.timestamp }} |
-
-            ---
-
-            ## 📋 Changes Since Last Release
-            > Commits since `${{ steps.changelog.outputs.last_tag || 'the beginning of the repository' }}`
-
-            $(cat changelog.txt)
-
-            ---
-
-            ## 📦 Artifacts
-            The debug APK is attached below. Download and install it directly on your device.
-
-            ---
-            _This release was created automatically by GitHub Actions._
+          name: "🚀 Release Build — ${{ needs.build.outputs.release_tag }}"
+          body: |-## ✅ Automated Release Build\n\n            | Field      | Value                                     |\n            |------------|-------------------------------------------|\n            | **Branch** | `${{ github.ref_name }}`                  |\n            | **Commit** | `${{ github.sha }}`                       |\n            | **Author** | ${{ github.event.pusher.name }}           |\n            | **Built At** | ${{ github.event.head_commit.timestamp }} |\n\n            ---\n\n            ## 📋 Changes Since Last Release\n            > Commits since `${{ steps.changelog.outputs.last_tag || 'the beginning of the repository' }}`\n\n            $(cat changelog.txt)\n\n            ---\n\n            ## 📦 Artifacts\n            The release APK is attached below. Download and install it directly on your device.\n\n            ---\n\n            _This release was created automatically by GitHub Actions._
           files: ./artifacts/${{ steps.rename_apk.outputs.apk_name }}
           draft: false
-          prerelease: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload to Firebase App Distribution
+      - name: Upload to Firebase App Distribution
+        run: ./gradlew app:appDistributionUploadRelease
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          FIREBASE_TESTERS: ${{ secrets.FIREBASE_TESTERS }}
+          FIREBASE_RELEASE_NOTES: "Release build uploaded automatically via GitHub Actions."

@@ -30,43 +30,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
             firebaseAppDistribution {
                 artifactType = "APK"
-                appId = project.findProperty("FIREBASE_APP_ID")?.toString()
-                    ?: System.getenv("FIREBASE_APP_ID")
-                    ?: ""
-                testers = project.findProperty("FIREBASE_TESTERS")?.toString()
-                    ?: System.getenv("FIREBASE_TESTERS")
-                    ?: ""
+                appId = "1:31009001273:android:867d07a343a393f5e062e8"
+                testers = "bonds-tracker-testers"
                 releaseNotes = project.findProperty("FIREBASE_RELEASE_NOTES")?.toString()
                     ?: System.getenv("FIREBASE_RELEASE_NOTES")
                     ?: "New release build"
-                val serviceAccount = project.findProperty("FIREBASE_SERVICE_ACCOUNT_FILE")?.toString()
-                    ?: System.getenv("FIREBASE_SERVICE_ACCOUNT_FILE")
-                    ?: ""
-                if (serviceAccount.isNotEmpty()) {
-                    serviceCredentialsFile = serviceAccount
-                }
-            }
-        }
-        getByName("debug") {
-            firebaseAppDistribution {
-                artifactType = "APK"
-                appId = project.findProperty("FIREBASE_APP_ID")?.toString()
-                    ?: System.getenv("FIREBASE_APP_ID")
-                    ?: ""
-                testers = project.findProperty("FIREBASE_TESTERS")?.toString()
-                    ?: System.getenv("FIREBASE_TESTERS")
-                    ?: ""
-                releaseNotes = project.findProperty("FIREBASE_RELEASE_NOTES")?.toString()
-                    ?: System.getenv("FIREBASE_RELEASE_NOTES")
-                    ?: "New debug build"
-                val serviceAccount = project.findProperty("FIREBASE_SERVICE_ACCOUNT_FILE")?.toString()
-                    ?: System.getenv("FIREBASE_SERVICE_ACCOUNT_FILE")
-                    ?: ""
-                if (serviceAccount.isNotEmpty()) {
-                    serviceCredentialsFile = serviceAccount
-                }
             }
         }
     }
