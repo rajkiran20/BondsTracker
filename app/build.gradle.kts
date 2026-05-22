@@ -1,4 +1,7 @@
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.Instant
 
 plugins {
     alias(libs.plugins.android.application)
@@ -17,8 +20,12 @@ android {
         applicationId = "app.le.bondstracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // Generates an increasing integer code based on time so Firebase accepts it as a newer build
+        versionCode = (Instant.now().epochSecond / 60).toInt()
+
+        // Formats the version name exactly as: "20/05/2026 13:25"
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+        versionName = LocalDateTime.now().format(formatter)
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,11 +40,9 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             firebaseAppDistribution {
                 artifactType = "APK"
-                appId = "1:31009001273:android:867d07a343a393f5e062e8"
-                testers = "bonds-tracker-testers"
-                releaseNotes = project.findProperty("FIREBASE_RELEASE_NOTES")?.toString()
-                    ?: System.getenv("FIREBASE_RELEASE_NOTES")
-                    ?: "New release build"
+                appId = System.getenv("APP_ID") ?: "1:31009001273:android:867d07a343a393f5e062e8"
+                groups = System.getenv("GROUPS") ?: "bonds-tracker-testers"
+                releaseNotesFile = System.getenv("RELEASE_NOTES_FILE") ?: ""
             }
         }
     }

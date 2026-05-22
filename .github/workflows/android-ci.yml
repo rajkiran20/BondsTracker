@@ -6,12 +6,12 @@ on:
       - master
 
 jobs:
-  build:
-    name: Build Release APK
+  release:
+    name: Distribute on Firebase
     runs-on: ubuntu-latest
 
-    outputs:
-      release_tag: ${{ steps.generate_tag.outputs.tag }}
+    permissions:
+      contents: write
 
     steps:
       # Checkout Repository
@@ -28,79 +28,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # Cache Gradle packages
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       # Grant execute permission for gradlew
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
-
-      # Build Release APK
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
-
-      # Generate Release Tag
-      - name: Generate Release Tag
-        id: generate_tag
-        run: |
-          TAG="release-$(date +'%Y%m%d%H%M%S')-${GITHUB_SHA::7}"
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Generated tag: ${TAG}"
-
-      # Upload APK Artifact
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release
-          path: app/build/outputs/apk/release/app-release.apk
-          retention-days: 1
-
-  release:
-    name: Distribute on Firebase
-    needs: build
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Download the Release APK Artifact
-      - name: Download APK Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release
-          path: ./artifacts
-
-      # Verify APK exists
-      - name: Verify APK
-        run: |
-          echo "Contents of artifacts directory:"
-          ls -lh ./artifacts/
-          test -f ./artifacts/app-release.apk && echo "✅ APK found" || (echo "❌ APK not found" && exit 1)
-
-      # Rename APK
-      - name: Rename APK
-        id: rename_apk
-        run: |
-          SHORT_SHA="${GITHUB_SHA::7}"
-          TIMESTAMP="$(date +'%Y%m%d%H%M%S')"
-          NEW_NAME="app-release-${TIMESTAMP}-${SHORT_SHA}.apk"
-          mv ./artifacts/app-release.apk ./artifacts/${NEW_NAME}
-          echo "apk_name=${NEW_NAME}" >> $GITHUB_OUTPUT
-          echo "Renamed APK to: ${NEW_NAME}"
 
       # Generate Changelog
       - name: Generate Changelog
@@ -120,24 +50,11 @@ jobs:
           echo "${COMMIT_LOG}" > changelog.txt
           echo "last_tag=${LAST_TAG}" >> $GITHUB_OUTPUT
 
-      # Create GitHub Release
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.build.outputs.release_tag }}
-          name: "🚀 Release Build — ${{ needs.build.outputs.release_tag }}"
-          body: |-## ✅ Automated Release Build\n\n            | Field      | Value                                     |\n            |------------|-------------------------------------------|\n            | **Branch** | `${{ github.ref_name }}`                  |\n            | **Commit** | `${{ github.sha }}`                       |\n            | **Author** | ${{ github.event.pusher.name }}           |\n            | **Built At** | ${{ github.event.head_commit.timestamp }} |\n\n            ---\n\n            ## 📋 Changes Since Last Release\n            > Commits since `${{ steps.changelog.outputs.last_tag || 'the beginning of the repository' }}`\n\n            $(cat changelog.txt)\n\n            ---\n\n            ## 📦 Artifacts\n            The release APK is attached below. Download and install it directly on your device.\n\n            ---\n\n            _This release was created automatically by GitHub Actions._
-          files: ./artifacts/${{ steps.rename_apk.outputs.apk_name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       # Upload to Firebase App Distribution
       - name: Upload to Firebase App Distribution
-        run: ./gradlew app:appDistributionUploadRelease
+        run: ./gradlew assembleRelease appDistributionUploadRelease
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
-          FIREBASE_TESTERS: ${{ secrets.FIREBASE_TESTERS }}
-          FIREBASE_RELEASE_NOTES: "Release build uploaded automatically via GitHub Actions."
+          APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          GROUPS: "bonds-tracker-testers"
+          RELEASE_NOTES_FILE: "changelog.txt"
