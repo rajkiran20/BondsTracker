@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31009001273",
+    "project_id": "bonds-tracker",
+    "storage_bucket": "bonds-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31009001273:android:867d07a343a393f5e062e8",
+        "android_client_info": {
+          "package_name": "app.le.bondstracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHgEW_WbaqaEWvC0PkGDvAzexAOEUcBRw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
