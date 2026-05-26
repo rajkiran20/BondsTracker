@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,7 +25,8 @@ class MainViewModel @Inject constructor(
 
     fun toggleDarkMode() {
         viewModelScope.launch {
-            settingsRepository.setDarkMode(!isDarkMode.value)
+            val current = settingsRepository.isDarkMode.first()
+            settingsRepository.setDarkMode(!current)
         }
     }
 }

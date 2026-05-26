@@ -1,17 +1,17 @@
 package app.le.bondstracker.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = GoldPrimary,
+    primary = GeminiBlueDark,            // Fixed: Replaced GeminiBlue
     onPrimary = NavyDeep,
-    primaryContainer = GoldDark,
+    primaryContainer = GeminiPurpleDark,
     onPrimaryContainer = TextPrimary,
-    secondary = GoldLight,
+    secondary = GeminiAmberDark,         // Fixed: Replaced GoldLight
     onSecondary = NavyDeep,
     background = NavyDeep,
     onBackground = TextPrimary,
@@ -26,11 +26,11 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = GoldDark,
+    primary = GeminiBlue,                // Fixed: Replaced GeminiBlueDark
     onPrimary = SnowBackground,
-    primaryContainer = GoldPrimary,
+    primaryContainer = GeminiPurple,
     onPrimaryContainer = TextPrimaryLight,
-    secondary = GoldDark,
+    secondary = GeminiBlue,              // Fixed: Replaced GeminiBlueDark
     onSecondary = SnowBackground,
     background = SnowBackground,
     onBackground = TextPrimaryLight,
@@ -46,11 +46,12 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun BondsTrackerTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    isDarkTheme = darkTheme
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography,

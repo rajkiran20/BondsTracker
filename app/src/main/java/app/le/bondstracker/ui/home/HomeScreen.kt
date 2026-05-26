@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -24,6 +26,12 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,13 +42,19 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.material.icons.outlined.Percent
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import app.le.bondstracker.R
 import app.le.bondstracker.domain.model.Bond
 import app.le.bondstracker.ui.theme.*
@@ -55,7 +69,60 @@ fun HomeScreen(
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val isDarkMode by mainViewModel.isDarkMode.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    HomeScreenContent(
+        state = state,
+        onAddBondClick = onAddBondClick,
+        onBondClick = onBondClick,
+        onToggleDarkMode = { mainViewModel.toggleDarkMode() },
+        onExportBonds = {
+            val json = viewModel.exportBondsToJson()
+            try {
+                var folder = java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Bond Investments")
+                if (!folder.exists()) {
+                    val created = folder.mkdirs()
+                    if (!created) {
+                        // Fallback to app-specific directory if no permission
+                        folder = java.io.File(context.getExternalFilesDir(null), "Bond Investments")
+                        folder.mkdirs()
+                    }
+                }
+                val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.US)
+                val timeFormat = SimpleDateFormat("HH-mm-ss", Locale.US)
+                val dateStr = dateFormat.format(java.util.Date())
+                val timeStr = timeFormat.format(java.util.Date())
+                val fileName = "AllBonds-$dateStr-$timeStr.json"
+                val file = java.io.File(folder, fileName)
+                file.writeText(json)
+                android.widget.Toast.makeText(context, "Saved to ${file.absolutePath}", android.widget.Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Failed to save: ${e.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        },
+        onSetStatusFilter = { viewModel.setStatusFilter(it) },
+        onClearFilters = { viewModel.clearFilters() },
+        onSelectPlatform = { viewModel.selectPlatform(it) },
+        onSelectInvestor = { viewModel.selectInvestor(it) },
+        onSelectStatus = { viewModel.selectStatus(it) },
+        onSelectSortOption = { viewModel.selectSortOption(it) }
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    state: HomeUiState,
+    onAddBondClick: () -> Unit,
+    onBondClick: (String) -> Unit,
+    onToggleDarkMode: () -> Unit,
+    onExportBonds: () -> Unit,
+    onSetStatusFilter: (String?) -> Unit,
+    onClearFilters: () -> Unit,
+    onSelectPlatform: (String) -> Unit,
+    onSelectInvestor: (String) -> Unit,
+    onSelectStatus: (String) -> Unit,
+    onSelectSortOption: (SortOption) -> Unit
+) {
     val isFiltered = state.selectedPlatforms.isNotEmpty() || state.selectedInvestors.isNotEmpty() || state.selectedStatuses.isNotEmpty()
     var filterPanelOpen by remember { mutableStateOf(false) }
     val hasFiltersAvailable = state.availablePlatforms.size > 1 || state.availableInvestors.size > 1 || state.availableStatuses.size > 1
@@ -65,10 +132,15 @@ fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddBondClick,
-                containerColor = GoldPrimary,
-                contentColor = NavyDeep
+                containerColor = GeminiBlue,
+                contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Investment", modifier = Modifier.size(28.dp))
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add Investment",
+                    modifier = Modifier.size(28.dp)
+                )
             }
         }
     ) { paddingValues ->
@@ -83,7 +155,7 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Brush.verticalGradient(listOf(NavySurface, NavyDeep)))
+                        .background(NavyDeep)
                         .padding(horizontal = 20.dp, vertical = 24.dp)
                 ) {
                     Row(
@@ -91,23 +163,40 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.TrendingUp,
-                                contentDescription = null,
-                                tint = GoldPrimary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                "Bonds Tracker",
-                                style = MaterialTheme.typography.headlineLarge,
-                                color = TextPrimary
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFFFFF9C4).copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.TrendingUp,
+                                    contentDescription = null,
+                                    tint = GeminiAmber,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    "Bonds Tracker",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = TextPrimary
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    "Corporate Bonds Portfolio",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
                         }
+
+
 
                         // 3-dots menu
                         var topMenuExpanded by remember { mutableStateOf(false) }
-                        val context = LocalContext.current
                         
                         Box {
                             IconButton(onClick = { topMenuExpanded = true }) {
@@ -125,59 +214,32 @@ fun HomeScreen(
                                 DropdownMenuItem(
                                     text = { Text("Toggle dark mode", color = TextPrimary) },
                                     onClick = {
-                                        mainViewModel.toggleDarkMode()
+                                        onToggleDarkMode()
                                         topMenuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
                                     text = { Text("Export investments", color = TextPrimary) },
                                     onClick = {
-                                        val json = viewModel.exportBondsToJson()
-                                        try {
-                                            var folder = java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Bond Investments")
-                                            if (!folder.exists()) {
-                                                val created = folder.mkdirs()
-                                                if (!created) {
-                                                    // Fallback to app-specific directory if no permission
-                                                    folder = java.io.File(context.getExternalFilesDir(null), "Bond Investments")
-                                                    folder.mkdirs()
-                                                }
-                                            }
-                                            val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.US)
-                                            val timeFormat = SimpleDateFormat("HH-mm-ss", Locale.US)
-                                            val dateStr = dateFormat.format(java.util.Date())
-                                            val timeStr = timeFormat.format(java.util.Date())
-                                            val fileName = "AllBonds-$dateStr-$timeStr.json"
-                                            val file = java.io.File(folder, fileName)
-                                            file.writeText(json)
-                                            android.widget.Toast.makeText(context, "Saved to ${file.absolutePath}", android.widget.Toast.LENGTH_LONG).show()
-                                        } catch (e: Exception) {
-                                            android.widget.Toast.makeText(context, "Failed to save: ${e.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
-                                        }
+                                        onExportBonds()
                                         topMenuExpanded = false
                                     }
                                 )
                             }
                         }
                     }
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Corporate Bonds Portfolio",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary
-                    )
                 }
             }
 
             // Portfolio Summary Card
             item {
                 PortfolioSummaryCard(
-                    summaries = listOf(state.overallSummary, state.activeSummary, state.closedSummary),
+                    state = state,
                     onPageChanged = { page ->
                         when(page) {
-                            0 -> viewModel.setStatusFilter(null)           // Overall
-                            1 -> viewModel.setStatusFilter("Active")       // Active
-                            2 -> viewModel.setStatusFilter("Matured")      // Closed/Matured
+                            0 -> onSetStatusFilter(null)           // Overall
+                            1 -> onSetStatusFilter("Active")       // Active
+                            2 -> onSetStatusFilter("Matured")      // Closed/Matured
                         }
                     }
                 )
@@ -194,13 +256,16 @@ fun HomeScreen(
                     ) {
                         Text(
                             buildString {
-                                append("Bonds (${state.filteredBonds.size}")
+                                val activeCount = state.bonds.count { it.status.lowercase() == "active" }
+                                val totalCount = state.bonds.size
+                                val totalWorth = state.bonds.filter { it.status.lowercase() == "active" }.sumOf { it.investmentAmount }
+                                
                                 if (isFiltered) {
-                                    append(" of ${state.bonds.size})")
-                                    val total = state.filteredBonds.sumOf { it.investmentAmount }
-                                    append(" worth ₹${formatPortfolioAmount(total)}")
+                                    append("Bonds (${state.filteredBonds.size} of $totalCount)")
+                                    val filteredWorth = state.filteredBonds.sumOf { it.investmentAmount }
+                                    append(" worth ₹${formatPortfolioAmount(filteredWorth)}")
                                 } else {
-                                    append(")")
+                                    append("Bonds ($activeCount of $totalCount) worth ₹${formatPortfolioAmount(totalWorth)}")
                                 }
                             },
                             style = MaterialTheme.typography.titleMedium,
@@ -212,7 +277,7 @@ fun HomeScreen(
                         AnimatedVisibility(visible = isFiltered && filterPanelOpen, enter = fadeIn(), exit = fadeOut()) {
                             TextButton(
                                 onClick = {
-                                    viewModel.clearFilters()
+                                    onClearFilters()
                                     filterPanelOpen = false
                                 },
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
@@ -228,28 +293,70 @@ fun HomeScreen(
                             }
                         }
 
-                        // Filter toggle button
+                        // Filter chip/button
                         if (hasFiltersAvailable) {
-                            IconButton(onClick = { filterPanelOpen = !filterPanelOpen }) {
-                                Icon(
-                                    Icons.Default.FilterList,
-                                    contentDescription = "Filter bonds",
-                                    tint = if (isFiltered || filterPanelOpen) GoldPrimary else TextSecondary,
-                                    modifier = Modifier.size(22.dp)
-                                )
+                            Surface(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .clickable { filterPanelOpen = !filterPanelOpen },
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isFiltered || filterPanelOpen) GeminiBlue else DividerColor.copy(alpha = 0.5f)
+                                ),
+                                color = Color.Transparent
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.Default.FilterList,
+                                        contentDescription = null,
+                                        tint = if (isFiltered || filterPanelOpen) GeminiBlue else TextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        "Filter",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (isFiltered || filterPanelOpen) GeminiBlue else TextSecondary
+                                    )
+                                }
                             }
                         }
 
-                        // Sort toggle button
+                        // Sort chip/button
                         var sortMenuExpanded by remember { mutableStateOf(false) }
                         Box {
-                            IconButton(onClick = { sortMenuExpanded = true }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.Sort,
-                                    contentDescription = "Sort bonds",
-                                    tint = if (state.selectedSortOption != SortOption.EARLIEST_PAYOUT) GoldPrimary else TextSecondary,
-                                    modifier = Modifier.size(22.dp)
-                                )
+                            Surface(
+                                modifier = Modifier
+                                    .padding(end = 12.dp)
+                                    .clickable { sortMenuExpanded = true },
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (state.selectedSortOption != SortOption.EARLIEST_PAYOUT) GeminiBlue else DividerColor.copy(alpha = 0.5f)
+                                ),
+                                color = Color.Transparent
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Sort,
+                                        contentDescription = null,
+                                        tint = if (state.selectedSortOption != SortOption.EARLIEST_PAYOUT) GeminiBlue else TextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        "Sort",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (state.selectedSortOption != SortOption.EARLIEST_PAYOUT) GeminiBlue else TextSecondary
+                                    )
+                                }
                             }
                             DropdownMenu(
                                 expanded = sortMenuExpanded,
@@ -257,44 +364,44 @@ fun HomeScreen(
                                 containerColor = NavyCard
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Earliest Payout", color = if (state.selectedSortOption == SortOption.EARLIEST_PAYOUT) GoldPrimary else TextPrimary) },
+                                    text = { Text("Earliest Payout", color = if (state.selectedSortOption == SortOption.EARLIEST_PAYOUT) GeminiBlue else TextPrimary) },
                                     onClick = { 
-                                        viewModel.selectSortOption(SortOption.EARLIEST_PAYOUT)
+                                        onSelectSortOption(SortOption.EARLIEST_PAYOUT)
                                         sortMenuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Recently Added", color = if (state.selectedSortOption == SortOption.CHRONOLOGICAL) GoldPrimary else TextPrimary) },
+                                    text = { Text("Recently Added", color = if (state.selectedSortOption == SortOption.CHRONOLOGICAL) GeminiBlue else TextPrimary) },
                                     onClick = { 
-                                        viewModel.selectSortOption(SortOption.CHRONOLOGICAL)
+                                        onSelectSortOption(SortOption.CHRONOLOGICAL)
                                         sortMenuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Highest Interest", color = if (state.selectedSortOption == SortOption.INTEREST_RATE) GoldPrimary else TextPrimary) },
+                                    text = { Text("Highest Interest", color = if (state.selectedSortOption == SortOption.INTEREST_RATE) GeminiBlue else TextPrimary) },
                                     onClick = { 
-                                        viewModel.selectSortOption(SortOption.INTEREST_RATE)
+                                        onSelectSortOption(SortOption.INTEREST_RATE)
                                         sortMenuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Highest Amount", color = if (state.selectedSortOption == SortOption.INVESTMENT_AMOUNT) GoldPrimary else TextPrimary) },
+                                    text = { Text("Highest Amount", color = if (state.selectedSortOption == SortOption.INVESTMENT_AMOUNT) GeminiBlue else TextPrimary) },
                                     onClick = { 
-                                        viewModel.selectSortOption(SortOption.INVESTMENT_AMOUNT)
+                                        onSelectSortOption(SortOption.INVESTMENT_AMOUNT)
                                         sortMenuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Earliest Maturity", color = if (state.selectedSortOption == SortOption.EARLIEST_MATURITY) GoldPrimary else TextPrimary) },
+                                    text = { Text("Earliest Maturity", color = if (state.selectedSortOption == SortOption.EARLIEST_MATURITY) GeminiBlue else TextPrimary) },
                                     onClick = { 
-                                        viewModel.selectSortOption(SortOption.EARLIEST_MATURITY)
+                                        onSelectSortOption(SortOption.EARLIEST_MATURITY)
                                         sortMenuExpanded = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Shortest Tenure", color = if (state.selectedSortOption == SortOption.SHORTEST_TENURE) GoldPrimary else TextPrimary) },
+                                    text = { Text("Shortest Tenure", color = if (state.selectedSortOption == SortOption.SHORTEST_TENURE) GeminiBlue else TextPrimary) },
                                     onClick = { 
-                                        viewModel.selectSortOption(SortOption.SHORTEST_TENURE)
+                                        onSelectSortOption(SortOption.SHORTEST_TENURE)
                                         sortMenuExpanded = false
                                     }
                                 )
@@ -319,7 +426,7 @@ fun HomeScreen(
                                     label = "Platform",
                                     options = state.availablePlatforms,
                                     selected = state.selectedPlatforms,
-                                    onSelect = { viewModel.selectPlatform(it) }
+                                    onSelect = { onSelectPlatform(it) }
                                 )
                             }
                             if (state.availableInvestors.size > 1) {
@@ -327,7 +434,7 @@ fun HomeScreen(
                                     label = "Investor",
                                     options = state.availableInvestors,
                                     selected = state.selectedInvestors,
-                                    onSelect = { viewModel.selectInvestor(it) }
+                                    onSelect = { onSelectInvestor(it) }
                                 )
                             }
                             if (state.availableStatuses.size > 1) {
@@ -335,15 +442,16 @@ fun HomeScreen(
                                     label = "Status",
                                     options = state.availableStatuses,
                                     selected = state.selectedStatuses,
-                                    onSelect = { viewModel.selectStatus(it) }
+                                    onSelect = { onSelectStatus(it) }
                                 )
                             }
                         }
                     }
 
+                    // HorizontalDivider
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 20.dp),
-                        color = DividerColor
+                        color = DividerColor.copy(alpha = 0.5f)
                     )
                 }
             }
@@ -355,14 +463,14 @@ fun HomeScreen(
                         Modifier.fillMaxWidth().padding(40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = GoldPrimary)
+                        CircularProgressIndicator(color = GeminiBlue)
                     }
                 }
             } else if (state.filteredBonds.isEmpty()) {
                 item {
                     EmptyState(
                         isFiltered = isFiltered,
-                        onClearFilters = { viewModel.clearFilters() }
+                        onClearFilters = { onClearFilters() }
                     )
                 }
             } else {
@@ -417,29 +525,86 @@ private fun ChipGroup(
                 colors = FilterChipDefaults.filterChipColors(
                     containerColor = NavyCard,
                     labelColor = TextSecondary,
-                    selectedContainerColor = GoldDark,
+                    selectedContainerColor = GeminiBlueDark,
                     selectedLabelColor = TextPrimary,
-                    iconColor = GoldPrimary,
+                    iconColor = GeminiBlue,
                     selectedLeadingIconColor = TextPrimary
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
                     selected = isSelected,
-                    borderColor = if (isSelected) GoldPrimary else DividerColor,
-                    selectedBorderColor = GoldPrimary,
+                    borderColor = if (isSelected) GeminiBlue else DividerColor,
+                    selectedBorderColor = GeminiBlue,
                     borderWidth = if (isSelected) 1.5.dp else 1.dp
                 )
+        )
+    }
+}
+}
+
+@Composable
+private fun SummaryMetric(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    iconColor: Color,
+    circleBgColor: Color,
+    modifier: Modifier = Modifier,
+    labelAlignment: Alignment.Horizontal = Alignment.CenterHorizontally
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = labelAlignment
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(circleBgColor)
+                .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(20.dp)
             )
         }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = TextPrimary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+            textAlign = when (labelAlignment) {
+                Alignment.Start -> TextAlign.Start
+                Alignment.End -> TextAlign.End
+                else -> TextAlign.Center
+            },
+            modifier = Modifier.align(labelAlignment)
+        )
     }
 }
 
 @Composable
 private fun PortfolioSummaryCard(
-    summaries: List<PortfolioSummary>,
+    state: HomeUiState,
     onPageChanged: (Int) -> Unit
 ) {
+    val summaries = listOf(state.overallSummary, state.activeSummary, state.closedSummary)
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { summaries.size })
+
+    val totalCount = state.bonds.size
+    val activeCount = state.bonds.count { it.status.lowercase() == "active" }
+    val closedCount = state.bonds.count { it.status.lowercase() in listOf("matured", "defaulted") }
 
     LaunchedEffect(pagerState.currentPage) {
         onPageChanged(pagerState.currentPage)
@@ -451,50 +616,79 @@ private fun PortfolioSummaryCard(
             modifier = Modifier.fillMaxWidth()
         ) { page ->
             val summary = summaries[page]
+            val formattedTitle = when (page) {
+                0 -> "Overall Portfolio ($totalCount/$totalCount)"
+                1 -> "Active Portfolio ($activeCount/$totalCount)"
+                else -> "Closed Portfolio ($closedCount/$totalCount)"
+            }
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                colors = CardDefaults.cardColors(containerColor = NavyCard.copy(alpha = 0.3f)),
+                border = BorderStroke(1.dp, GeminiBlue.copy(alpha = 0.2f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(listOf(Color(0xFF1E3A5F), NavyCard)),
-                            shape = RoundedCornerShape(20.dp)
-                        )
                         .padding(20.dp)
                 ) {
                     Column {
-                        Text(
-                            summary.title,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = GoldPrimary
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = formattedTitle,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = GeminiBlue,
+                            )
+                        }
                         Spacer(Modifier.height(16.dp))
                         Row(
-                            Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            SummaryMetric("Total Invested", "₹${formatPortfolioAmount(summary.totalInvested)}", Modifier.weight(1f))
-                            SummaryMetric("Principal Repaid", "₹${formatPortfolioAmount(summary.totalPrincipalReceived)}", Modifier.weight(1f))
-                            SummaryMetric("Interest Paid", "₹${formatPortfolioAmount(summary.totalInterestReceived)}", Modifier.weight(1f))
-                            SummaryMetric(summary.bondCountLabel, summary.bondCount.toString(), Modifier.weight(1f))
+                            SummaryMetric(
+                                label = "Total Invested",
+                                value = "₹${formatPortfolioAmount(summary.totalInvested)}",
+                                icon = Icons.Outlined.AccountBalanceWallet,
+                                iconColor = GeminiBlue,
+                                circleBgColor = GeminiBlue.copy(alpha = 0.15f),
+                                labelAlignment = Alignment.Start
+                            )
+                            SummaryMetric(
+                                label = "Returns Received",
+                                value = "₹${formatPortfolioAmount(summary.totalReturns)}",
+                                icon = Icons.AutoMirrored.Outlined.TrendingUp,
+                                iconColor = Color(0xFF81C784),
+                                circleBgColor = Color(0xFF4CAF50).copy(alpha = 0.15f),
+                                labelAlignment = Alignment.CenterHorizontally
+                            )
+                            SummaryMetric(
+                                label = "Interest Received",
+                                value = "₹${formatPortfolioAmount(summary.totalInterestReceived)}",
+                                icon = Icons.Outlined.Percent,
+                                iconColor = Color(0xFFFFD54F),
+                                circleBgColor = Color(0xFFFFB74D).copy(alpha = 0.15f),
+                                labelAlignment = Alignment.End
+                            )
                         }
                     }
                 }
             }
         }
-        
+
         // Setup pager indicators
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
             horizontalArrangement = Arrangement.Center
         ) {
             repeat(summaries.size) { iteration ->
-                val color = if (pagerState.currentPage == iteration) GoldPrimary else DividerColor
+                val color = if (pagerState.currentPage == iteration) GeminiBlue else DividerColor
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
@@ -508,34 +702,22 @@ private fun PortfolioSummaryCard(
 }
 
 @Composable
-private fun SummaryMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(value, style = MaterialTheme.typography.titleMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(2.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary, textAlign = TextAlign.Center)
-    }
-}
-
-@Composable
 private fun BondCard(bond: Bond, onClick: () -> Unit) {
     val statusColor = when (bond.status.lowercase()) {
         "active" -> GreenSuccess
-        "matured" -> AmberWarning
+        "matured" -> Color.Black
         "defaulted" -> RedError
         else -> TextSecondary
     }
     val statusBg = when (bond.status.lowercase()) {
         "active" -> GreenLight
-        "matured" -> AmberLight
+        "matured" -> TextMuted
         "defaulted" -> RedLight
         else -> NavyElevated
     }
 
     val isMatured = bond.status.lowercase() in listOf("matured", "defaulted")
-    val alpha = if (isMatured) 0.6f else 1f
+    val alpha = if (isMatured) 0.8f else 1f
 
     Card(
         modifier = Modifier
@@ -544,102 +726,190 @@ private fun BondCard(bond: Bond, onClick: () -> Unit) {
             .clickable { onClick() }
             .alpha(alpha),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = NavyCard),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(containerColor = NavyCard.copy(alpha = if (isDarkTheme) 0.1f else 0.3f)),
+        border = BorderStroke(0.5.dp, DividerColor.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        bond.companyName,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "${bond.investor} • ",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        val iconRes = getPlatformIcon(bond.platform)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp)) {
+                // Top Section: Platform Icon + Titles (end padding to avoid ribbon overlap)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 64.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val iconRes = getPlatformIcon(bond.platform)
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(GeminiBlue.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         if (iconRes != null) {
                             Image(
                                 painter = painterResource(id = iconRes),
                                 contentDescription = bond.platform,
                                 modifier = Modifier
-                                    .height(20.dp)
-                                    .widthIn(max = 80.dp)
+                                    .size(40.dp)
+                                    .clip(CircleShape),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
                             )
                         } else {
                             Text(
-                                text = bond.platform,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = GoldPrimary,
-                                fontWeight = FontWeight.Bold
+                                text = bond.platform.take(1).uppercase(),
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = GeminiBlue
+                            )
+                        }
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = bond.companyName,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = bond.investor,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
                             )
                         }
                     }
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Box(
+
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = DividerColor.copy(alpha = 0.3f), thickness = 0.5.dp)
+                Spacer(Modifier.height(12.dp))
+
+                // Metrics Row (3 columns separated by thin vertical dividers)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    BondMetric(
+                        label = "Invested",
+                        value = "₹${formatAmount(bond.investmentAmount)}",
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.Start,
+                        textAlign = TextAlign.Start
+                    )
+                    
+                    VerticalDivider(
+                        color = DividerColor.copy(alpha = 0.3f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.fillMaxHeight().padding(vertical = 4.dp)
+                    )
+
+                    BondMetric(
+                        label = "Interest Rate",
+                        value = "${bond.interestRate}%",
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        textAlign = TextAlign.Center
+                    )
+
+                    VerticalDivider(
+                        color = DividerColor.copy(alpha = 0.3f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.fillMaxHeight().padding(vertical = 4.dp)
+                    )
+
+                    BondMetric(
+                        label = "Matures",
+                        value = formatDateString(bond.maturityDate),
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.End,
+                        textAlign = TextAlign.End
+                    )
+                }
+
+                // Bottom payout warning section
+                if (!bond.nextPayoutDate.isNullOrBlank()) {
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(statusBg)
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CalendarToday,
+                            contentDescription = null,
+                            tint = GeminiBlue,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
                         Text(
-                            bond.status.replaceFirstChar { it.uppercase() },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = statusColor,
-                            fontWeight = FontWeight.Bold
+                            text = "Next Payout: ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = formatDateString(bond.nextPayoutDate),
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            color = GeminiBlue
                         )
                     }
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
-            HorizontalDivider(color = DividerColor)
-            Spacer(Modifier.height(12.dp))
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                BondMetric(label = "Invested", value = "₹${formatAmount(bond.investmentAmount)}")
-                BondMetric(label = "Interest Rate", value = "${bond.interestRate}%")
-                BondMetric(label = "Matures", value = formatDateString(bond.maturityDate))
-            }
-
-            if (!bond.nextPayoutDate.isNullOrBlank()) {
-                Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(GoldPrimary)
+            // Ribbon Overlay
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(
+                        color = statusBg,
+                        shape = RoundedCornerShape(topEnd = 16.dp, bottomStart = 16.dp)
                     )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "Next Payout: ${formatDateString(bond.nextPayoutDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = GoldPrimary
-                    )
-                }
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = bond.status.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = statusColor,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
 }
 
 @Composable
-private fun BondMetric(label: String, value: String) {
-    Column {
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+private fun BondMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    textAlign: TextAlign = TextAlign.Start
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = horizontalAlignment
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+            color = TextPrimary,
+            textAlign = textAlign
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+            textAlign = textAlign
+        )
     }
 }
 
@@ -665,7 +935,7 @@ private fun EmptyState(isFiltered: Boolean, onClearFilters: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         if (isFiltered) {
             TextButton(onClick = onClearFilters) {
-                Text("Clear Filters", color = GoldPrimary)
+                Text("Clear Filters", color = GeminiBlue)
             }
         } else {
             Text(
@@ -734,5 +1004,78 @@ private fun getPlatformIcon(platform: String): Int? {
         "jiraaf" -> R.drawable.ic_jiraaf
         "stable money", "stablemoney" -> R.drawable.ic_stablemoney
         else -> null
+    }
+}
+
+private fun getCompanyInitials(name: String): String {
+    val words = name.split(" ").filter { it.isNotEmpty() }
+    return if (words.size >= 2) {
+        (words[0].take(1) + words[1].take(1)).uppercase()
+    } else {
+        name.take(2).uppercase()
+    }
+}
+
+@Preview(showBackground = true)
+@PreviewLightDark
+@Composable
+fun HomeScreenPreview() {
+    val sampleBond = Bond(
+        investmentId = "bond_123",
+        createdAt = "2023-12-15",
+        platform = "Jiraaf",
+        investor = "John Doe",
+        companyName = "Green Energy Corp",
+        bondCategory = "Corporate",
+        bondType = listOf("Senior Secured"),
+        status = "Active",
+        currency = "INR",
+        investmentAmount = 100000.0,
+        faceValuePerUnit = 1000.0,
+        units = 100,
+        currentValue = 100000.0,
+        outstandingPrincipal = 100000.0,
+        returnsReceived = 1200.0,
+        gains = 1200.0,
+        totalPrincipalRepaid = 0.0,
+        interestRate = 12.0,
+        couponRate = 11.5,
+        payoutFrequency = "Quarterly",
+        startDate = "2023-06-15",
+        orderDate = "2023-06-10",
+        maturityDate = "2024-06-15",
+        tenureMonths = 12,
+        interestPaid = 1200.0,
+        nextPayoutDate = "2024-03-15",
+        notes = null,
+        payouts = emptyList()
+    )
+
+    val sampleState = HomeUiState(
+        bonds = listOf(sampleBond),
+        filteredBonds = listOf(sampleBond),
+        overallSummary = PortfolioSummary("Overall Portfolio", 100000.0, 1200.0, 0.0, 1200.0, 1, "Total Bonds"),
+        activeSummary = PortfolioSummary("Active Bonds", 100000.0, 1200.0, 0.0, 1200.0, 1, "Active Bonds"),
+        closedSummary = PortfolioSummary("Closed/Matured", 0.0, 0.0, 0.0, 0.0, 0, "Closed Bonds"),
+        isLoading = false,
+        availablePlatforms = listOf("Jiraaf"),
+        availableInvestors = listOf("John Doe"),
+        availableStatuses = listOf("Active")
+    )
+
+    BondsTrackerTheme {
+        HomeScreenContent(
+            state = sampleState,
+            onAddBondClick = {},
+            onBondClick = {},
+            onToggleDarkMode = {},
+            onExportBonds = {},
+            onSetStatusFilter = {},
+            onClearFilters = {},
+            onSelectPlatform = {},
+            onSelectInvestor = {},
+            onSelectStatus = {},
+            onSelectSortOption = {}
+        )
     }
 }

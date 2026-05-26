@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -66,7 +67,7 @@ fun AddBondScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = GoldPrimary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = GeminiBlue)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = NavySurface)
@@ -88,7 +89,7 @@ fun AddBondScreen(
                 colors = CardDefaults.cardColors(containerColor = NavyCard)
             ) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Default.Code, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Code, contentDescription = null, tint = GeminiBlue, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
                     Column {
                         Text(
@@ -123,9 +124,9 @@ fun AddBondScreen(
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GoldPrimary,
+                    focusedBorderColor = GeminiBlue,
                     unfocusedBorderColor = DividerColor,
-                    cursorColor = GoldPrimary,
+                    cursorColor = GeminiBlue,
                     focusedContainerColor = NavyCard,
                     unfocusedContainerColor = NavyCard,
                     focusedTextColor = TextPrimary,
@@ -153,7 +154,7 @@ fun AddBondScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = NavyElevated,
-                    contentColor = GoldPrimary
+                    contentColor = GeminiBlue
                 ),
                 enabled = !state.isLoading
             ) {
@@ -174,7 +175,7 @@ fun AddBondScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = GoldPrimary,
+                    containerColor = GeminiBlue,
                     contentColor = NavyDeep
                 ),
                 enabled = !state.isLoading
@@ -186,7 +187,7 @@ fun AddBondScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
                         "Save Investment",
