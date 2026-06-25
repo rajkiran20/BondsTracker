@@ -83,6 +83,10 @@ fun HomeScreen(
         onBondClick = onBondClick,
         onToggleDarkMode = { mainViewModel.toggleDarkMode() },
         onExportBonds = {
+            if (viewModel.uiState.value.bonds.isEmpty()) {
+                android.widget.Toast.makeText(context, "No bonds added yet!", android.widget.Toast.LENGTH_SHORT).show()
+                return@HomeScreenContent
+            }
             val json = viewModel.exportBondsToJson()
             try {
                 val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.US)

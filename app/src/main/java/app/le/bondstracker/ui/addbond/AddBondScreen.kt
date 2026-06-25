@@ -1,6 +1,13 @@
 package app.le.bondstracker.ui.addbond
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -34,7 +41,26 @@ fun AddBondScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val launcher = rememberLauncherForActivityResult(
+        object : ActivityResultContract<Unit, Uri?>() {
+            override fun createIntent(context: Context, input: Unit): Intent {
+                return Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "text/plain", "*/*"))
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val downloadsUri = Uri.parse(
+                            "content://com.android.externalstorage.documents/document/primary:${Environment.DIRECTORY_DOWNLOADS}"
+                        )
+                        putExtra(DocumentsContract.EXTRA_INITIAL_URI, downloadsUri)
+                    }
+                }
+            }
+            override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+                return intent?.data.takeIf { resultCode == android.app.Activity.RESULT_OK }
+            }
+        }
+    ) { uri ->
         uri?.let {
             try {
                 context.contentResolver.openInputStream(it)?.bufferedReader()?.use { reader ->
@@ -147,7 +173,7 @@ fun AddBondScreen(
 
             // File Picker button
             Button(
-                onClick = { launcher.launch("*/*") },
+                onClick = { launcher.launch(Unit) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
