@@ -47,6 +47,7 @@ data class HomeUiState(
 
 enum class SortOption {
     EARLIEST_PAYOUT,
+    RECENT_PAYOUT,
     EARLIEST_MATURITY,
     CHRONOLOGICAL,
     INTEREST_RATE,
@@ -79,7 +80,20 @@ class HomeViewModel @Inject constructor(
         }.timeInMillis
 
         val bonds = rawBonds.map { rawBond ->
-            val bondStatus = if (rawBond.status.equals("closed", ignoreCase = true)) "matured" else rawBond.status
+            var isMaturedByDate = false
+            try {
+                if (!rawBond.maturityDate.isNullOrBlank()) {
+                    val format = if (rawBond.maturityDate.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                    val maturityTime = format.parse(rawBond.maturityDate)?.time ?: Long.MAX_VALUE
+                    if (maturityTime < today) {
+                        isMaturedByDate = true
+                    }
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+            
+            val bondStatus = if (rawBond.status.equals("closed", ignoreCase = true) || isMaturedByDate) "matured" else rawBond.status
             var dynamicNextPayout = rawBond.nextPayoutDate
             
             if (rawBond.payouts.isNotEmpty() && bondStatus.equals("active", ignoreCase = true)) {
@@ -97,6 +111,8 @@ class HomeViewModel @Inject constructor(
                         format.parse(p.date)?.time ?: Long.MAX_VALUE
                     } catch (e: Exception) { Long.MAX_VALUE }
                 }?.date
+            } else if (bondStatus.equals("matured", ignoreCase = true)) {
+                dynamicNextPayout = null
             }
             
             rawBond.copy(status = bondStatus, nextPayoutDate = dynamicNextPayout)
@@ -109,6 +125,7 @@ class HomeViewModel @Inject constructor(
 
         val sorted = when (sortOption) {
             SortOption.EARLIEST_PAYOUT -> filtered.sortedBy { getNextPayoutTime(it.nextPayoutDate, it.status) }
+            SortOption.RECENT_PAYOUT -> filtered.sortedByDescending { getRecentPayoutTime(it) }
             SortOption.CHRONOLOGICAL -> filtered.sortedByDescending { it.orderDate }
             SortOption.INTEREST_RATE -> filtered.sortedByDescending { it.interestRate }
             SortOption.INVESTMENT_AMOUNT -> filtered.sortedByDescending { it.investmentAmount }
@@ -264,6 +281,23 @@ class HomeViewModel @Inject constructor(
         } catch (e: Exception) {
             Long.MAX_VALUE
         }
+    }
+
+    private fun getRecentPayoutTime(bond: Bond): Long {
+        val today = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        return bond.payouts.mapNotNull { p ->
+            try {
+                val format = if (p.date.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                val t = format.parse(p.date)?.time
+                if (t != null && t <= today) t else null
+            } catch (e: Exception) { null }
+        }.maxOrNull() ?: 0L
     }
 
     private fun getTenureDays(startStr: String?, maturityStr: String?): Long {

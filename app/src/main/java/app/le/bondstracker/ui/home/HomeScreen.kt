@@ -46,6 +46,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -371,6 +374,13 @@ fun HomeScreenContent(
                                     }
                                 )
                                 DropdownMenuItem(
+                                    text = { Text("Recent Payout", color = if (state.selectedSortOption == SortOption.RECENT_PAYOUT) GeminiBlue else TextPrimary) },
+                                    onClick = { 
+                                        onSelectSortOption(SortOption.RECENT_PAYOUT)
+                                        sortMenuExpanded = false
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Recently Added", color = if (state.selectedSortOption == SortOption.CHRONOLOGICAL) GeminiBlue else TextPrimary) },
                                     onClick = { 
                                         onSelectSortOption(SortOption.CHRONOLOGICAL)
@@ -479,7 +489,7 @@ fun HomeScreenContent(
                         visible = true,
                         enter = fadeIn() + slideInVertically()
                     ) {
-                        BondCard(bond = bond, onClick = { onBondClick(bond.investmentId) })
+                        BondCard(bond = bond, selectedSortOption = state.selectedSortOption, onClick = { onBondClick(bond.investmentId) })
                     }
                 }
             }
@@ -702,7 +712,7 @@ private fun PortfolioSummaryCard(
 }
 
 @Composable
-private fun BondCard(bond: Bond, onClick: () -> Unit) {
+private fun BondCard(bond: Bond, selectedSortOption: SortOption = SortOption.EARLIEST_PAYOUT, onClick: () -> Unit) {
     val statusColor = when (bond.status.lowercase()) {
         "active" -> GreenSuccess
         "matured" -> Color.Black
@@ -834,7 +844,33 @@ private fun BondCard(bond: Bond, onClick: () -> Unit) {
                 }
 
                 // Bottom payout warning section
-                if (!bond.nextPayoutDate.isNullOrBlank()) {
+                val isRecentPayoutSort = selectedSortOption == SortOption.RECENT_PAYOUT
+                
+                val recentPayout = if (isRecentPayoutSort) {
+                    val today = java.util.Calendar.getInstance().apply {
+                        set(java.util.Calendar.HOUR_OF_DAY, 0)
+                        set(java.util.Calendar.MINUTE, 0)
+                        set(java.util.Calendar.SECOND, 0)
+                        set(java.util.Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    
+                    bond.payouts.filter { p ->
+                        try {
+                            val format = if (p.date.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                            val t = format.parse(p.date)?.time
+                            t != null && t <= today
+                        } catch (e: Exception) { false }
+                    }.maxByOrNull { p ->
+                        try {
+                            val format = if (p.date.contains("T")) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                            format.parse(p.date)?.time ?: 0L
+                        } catch (e: Exception) { 0L }
+                    }
+                } else null
+
+                val showBottomSection = (!bond.nextPayoutDate.isNullOrBlank() && !isRecentPayoutSort) || (isRecentPayoutSort && recentPayout != null)
+
+                if (showBottomSection) {
                     Spacer(Modifier.height(12.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -850,15 +886,59 @@ private fun BondCard(bond: Bond, onClick: () -> Unit) {
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(Modifier.width(8.dp))
+                        
+                        val amountStr = if (isRecentPayoutSort && recentPayout != null) {
+                            "₹${formatAmount(recentPayout.amount)}"
+                        } else {
+                            val nextPayoutAmount = bond.payouts
+                                .filter { it.date.take(10) == bond.nextPayoutDate?.take(10) }
+                                .sumOf { it.amount }
+                            if (nextPayoutAmount > 0) "₹${formatAmount(nextPayoutAmount)}" else ""
+                        }
+                            
+                        val dateText = if (isRecentPayoutSort && recentPayout != null) {
+                            formatNextPayoutDateString(recentPayout.date)
+                        } else {
+                            formatNextPayoutDateString(bond.nextPayoutDate)
+                        }
+                        
+                        val isTodayOrTomorrow = dateText.equals("Today", ignoreCase = true) || dateText.equals("Tomorrow", ignoreCase = true)
+                        
                         Text(
-                            text = "Next Payout: ",
+                            text = buildAnnotatedString {
+                                if (isRecentPayoutSort) {
+                                    append("Last payment")
+                                } else {
+                                    append("Next payout")
+                                }
+                                
+                                if (amountStr.isNotEmpty()) {
+                                    append(" of ")
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = GreenSuccess)) {
+                                        append(amountStr)
+                                    }
+                                }
+                                
+                                if (isRecentPayoutSort) {
+                                    if (dateText.equals("Today", ignoreCase = true)) {
+                                        append(" was ")
+                                    } else {
+                                        append(" on ")
+                                    }
+                                } else {
+                                    if (isTodayOrTomorrow) {
+                                        append(" is ")
+                                    } else {
+                                        append(" on ")
+                                    }
+                                }
+                                
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = GeminiBlue)) {
+                                    append(dateText)
+                                }
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
-                        )
-                        Text(
-                            text = formatDateString(bond.nextPayoutDate),
-                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                            color = GeminiBlue
                         )
                     }
                 }
@@ -993,6 +1073,37 @@ private fun formatDateString(dateStr: String?): String {
             if (isToday) "Today"
             else if (isTomorrow) "Tomorrow"
             else SimpleDateFormat("dd/MM/yyyy", Locale.US).format(parsedDate)
+        } else dateStr
+    } catch (e: Exception) {
+        dateStr
+    }
+}
+
+private fun formatNextPayoutDateString(dateStr: String?): String {
+    if (dateStr.isNullOrBlank()) return ""
+    return try {
+        val parsedDate = try {
+            if (dateStr.contains("T")) {
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(dateStr)
+            } else {
+                SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(dateStr)
+            }
+        } catch (e: Exception) { null }
+
+        if (parsedDate != null) {
+            val calendarDate = java.util.Calendar.getInstance().apply { time = parsedDate }
+            val now = java.util.Calendar.getInstance()
+            
+            val isToday = calendarDate.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+                          calendarDate.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+            
+            now.add(java.util.Calendar.DAY_OF_YEAR, 1)
+            val isTomorrow = calendarDate.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+                             calendarDate.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+            
+            if (isToday) "Today"
+            else if (isTomorrow) "Tomorrow"
+            else SimpleDateFormat("d MMMM", Locale.US).format(parsedDate)
         } else dateStr
     } catch (e: Exception) {
         dateStr
