@@ -272,40 +272,23 @@ private fun BondHeroHeader(bond: Bond) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
-            // Left Side: Avatar + Details
-            Row(
-                modifier = Modifier.weight(1.3f),
-                verticalAlignment = Alignment.Top
+            // Left Side: Details
+            Column(
+                modifier = Modifier.weight(1.3f)
             ) {
-                val iconRes = getPlatformIcon(bond.platform)
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(GeminiBlueDark),
-                    contentAlignment = Alignment.Center
+                // Company Name
+                Text(
+                    text = bond.companyName,
+                    style = MaterialTheme.typography.titleLarge.copy(lineHeight = MaterialTheme.typography.titleLarge.fontSize * 1.25),
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (iconRes != null) {
-                        Image(
-                            painter = painterResource(id = iconRes),
-                            contentDescription = bond.platform,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Text(
-                            text = bond.companyName.take(1).uppercase(),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    // Platform Chip
+                    // Investor Chip
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -319,14 +302,20 @@ private fun BondHeroHeader(bond: Bond) {
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    Spacer(Modifier.height(6.dp))
-                    // Company Name
-                    Text(
-                        text = bond.companyName,
-                        style = MaterialTheme.typography.titleLarge.copy(lineHeight = MaterialTheme.typography.titleLarge.fontSize * 1.25),
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    // Platform Chip
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(GeminiBlue.copy(alpha = 0.15f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = bond.platform,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GeminiBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
