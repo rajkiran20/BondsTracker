@@ -64,6 +64,7 @@ import app.le.bondstracker.ui.theme.*
 
 import app.le.bondstracker.ui.MainViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onAddBondClick: () -> Unit,
@@ -73,6 +74,8 @@ fun HomeScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var exportSuccessPath by remember { mutableStateOf<String?>(null) }
+    var exportError by remember { mutableStateOf<String?>(null) }
 
     HomeScreenContent(
         state = state,
@@ -82,25 +85,36 @@ fun HomeScreen(
         onExportBonds = {
             val json = viewModel.exportBondsToJson()
             try {
-                var folder = java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS), "Bond Investments")
-                if (!folder.exists()) {
-                    val created = folder.mkdirs()
-                    if (!created) {
-                        // Fallback to app-specific directory if no permission
-                        folder = java.io.File(context.getExternalFilesDir(null), "Bond Investments")
-                        folder.mkdirs()
-                    }
-                }
                 val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.US)
                 val timeFormat = SimpleDateFormat("HH-mm-ss", Locale.US)
                 val dateStr = dateFormat.format(java.util.Date())
                 val timeStr = timeFormat.format(java.util.Date())
                 val fileName = "AllBonds-$dateStr-$timeStr.json"
-                val file = java.io.File(folder, fileName)
-                file.writeText(json)
-                android.widget.Toast.makeText(context, "Saved to ${file.absolutePath}", android.widget.Toast.LENGTH_LONG).show()
+                
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    val resolver = context.contentResolver
+                    val contentValues = android.content.ContentValues().apply {
+                        put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+                    }
+                    val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                    if (uri != null) {
+                        resolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.write(json.toByteArray())
+                        }
+                        exportSuccessPath = "Download/$fileName"
+                    } else {
+                        exportError = "Failed to create file in Downloads"
+                    }
+                } else {
+                    val folder = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+                    val file = java.io.File(folder, fileName)
+                    file.writeText(json)
+                    exportSuccessPath = file.absolutePath
+                }
             } catch (e: Exception) {
-                android.widget.Toast.makeText(context, "Failed to save: ${e.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+                exportError = "Failed to save: ${e.localizedMessage}"
             }
         },
         onSetStatusFilter = { viewModel.setStatusFilter(it) },
@@ -110,6 +124,69 @@ fun HomeScreen(
         onSelectStatus = { viewModel.selectStatus(it) },
         onSelectSortOption = { viewModel.selectSortOption(it) }
     )
+
+    if (exportSuccessPath != null) {
+        ModalBottomSheet(
+            onDismissRequest = { exportSuccessPath = null },
+            containerColor = NavySurface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    Icons.Outlined.Description,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = GeminiBlue
+                )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Export Successful",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = TextPrimary
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "File saved to:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+                Text(
+                    exportSuccessPath ?: "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = {
+                        try {
+                            val intent = Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "No file manager found", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                        exportSuccessPath = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = GeminiBlue),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Locate File", color = Color.White)
+                }
+                Spacer(Modifier.height(16.dp))
+            }
+        }
+    }
+
+    if (exportError != null) {
+        android.widget.Toast.makeText(context, exportError, android.widget.Toast.LENGTH_SHORT).show()
+        exportError = null
+    }
 }
 
 @Composable
